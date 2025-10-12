@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Net/UnrealNetwork.h"
 #include "ProjectileBase.generated.h"
 
 class UProjectileMovementComponent;
@@ -21,13 +22,24 @@ public:
 
 	//활성화
 	UFUNCTION()
-	void Active(const FTransform& FireTransform, const float InitSpeed);
+	void ActiveProjectile(const FTransform& FireTransform, const float InitSpeed);
 
 	//비활성화
 	UFUNCTION(BlueprintCallable)
-	void Inactivate();
+	void InactivateProjectile();
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
 
 protected:
+	//활성화 여부
+	UPROPERTY(ReplicatedUsing = OnRep_IsActive)
+	bool bIsActive;
+
+	UFUNCTION()
+	void OnRep_IsActive();
+	
 	//풀링 타이머 핸들
 	FTimerHandle PoolingTimerHandle;
 

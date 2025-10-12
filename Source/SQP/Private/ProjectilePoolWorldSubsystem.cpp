@@ -51,7 +51,7 @@ AProjectileBase* UProjectilePoolWorldSubsystem::PopProjectile(const TSubclassOf<
 	}
 
 	//활성화
-	Projectile->Active(FireTransform, InitSpeed);	
+	Projectile->ActiveProjectile(FireTransform, InitSpeed);	
 	
 	//반환
 	return Projectile;
