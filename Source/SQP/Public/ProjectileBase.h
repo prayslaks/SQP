@@ -37,16 +37,13 @@ public:
 
 protected:
 	//활성화 여부
-	UPROPERTY(ReplicatedUsing = OnRep_IsActive)
+	UPROPERTY(Replicated)
 	bool bIsActive;
 
 	//풀링 여부
 	UPROPERTY(EditDefaultsOnly)
 	bool bIsPoolable;
 
-	UFUNCTION()
-	void OnRep_IsActive();
-	
 	//풀링 타이머 핸들
 	FTimerHandle PoolingTimerHandle;
 
