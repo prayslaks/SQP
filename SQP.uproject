@@ -13,6 +13,15 @@
 				"AIModule",
 				"UMG"
 			]
+		},
+		{
+			"Name": "GentleKit",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"CoreUObject"
+			]
 		}
 	],
 	"Plugins": [
@@ -31,5 +40,14 @@
 			"Name": "GameplayStateTree",
 			"Enabled": true
 		}
-	]
+	],
+"AdditionalPluginDirectories": [
+    "../../../Plugins/GentleKit"
+  ],
+  "PreBuildSteps": {
+    "Windows": [
+      "powershell -NoProfile -ExecutionPolicy Bypass -File \"$(ProjectDir)Tools\\run_generate_daily_devlog_once.ps1\" -BackfillDays 30 -BuildSummary"
+    ]
+  }
+
 }

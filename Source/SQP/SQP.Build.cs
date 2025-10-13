@@ -18,7 +18,9 @@ public class SQP : ModuleRules
 			"AIModule",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
-			"UMG"
+			"UMG",
+			"GentleKit",
+			"Niagara",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
@@ -32,6 +34,7 @@ public class SQP : ModuleRules
 			"SQP/Variant_SideScrolling/Gameplay",
 			"SQP/Variant_SideScrolling/AI",
 			Path.Combine(ModuleDirectory, "Yeomin", "Public"),
+			Path.Combine(ModuleDirectory, "DataAssets", "Public"),
 		});
 
 		// Uncomment if you are using Slate UI
