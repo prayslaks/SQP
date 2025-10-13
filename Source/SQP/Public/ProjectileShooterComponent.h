@@ -26,6 +26,9 @@ public:
 	//각종 프로퍼티를 초기화하는 생성자
 	UProjectileShooterComponent();
 
+	//소유 캐릭터 획득
+	virtual void BeginPlay() override;
+
 	//매 틱마다 트리거 및 사격 상태를 확인하고 발사체를 생성-발사
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -37,11 +40,20 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ReleaseTrigger();
 
+	UFUNCTION(Server, Reliable)
+	void Server_StartShoot();
+
+	UFUNCTION(Server, Reliable)
+	void Server_StopShoot();
+
 	//발사할 블루프린트 클래스를 에디터에서 설정
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AProjectileBase> ProjectileClass;
 	
 protected:
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<ACharacter> OwnerCharacter;
+	
 	//사격 모드
 	UPROPERTY()
 	EShooterMode ShooterMode;

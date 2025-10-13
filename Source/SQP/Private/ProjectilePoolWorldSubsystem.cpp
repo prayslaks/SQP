@@ -49,9 +49,9 @@ AProjectileBase* UProjectilePoolWorldSubsystem::PopProjectile(const TSubclassOf<
 		//새롭게 생성
 		Projectile = GetWorld()->SpawnActor<AProjectileBase>(Class, FireTransform);
 	}
-
+	
 	//활성화
-	Projectile->Active(FireTransform, InitSpeed);	
+	Projectile->ActiveProjectile(FireTransform, InitSpeed);	
 	
 	//반환
 	return Projectile;
