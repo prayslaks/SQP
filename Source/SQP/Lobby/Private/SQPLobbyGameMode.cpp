@@ -1,8 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SQPLobbyGameMode.h"
+#include "SQP.h"
 #include "SQPPlayerController.h"
 #include "SQPPlayerState.h"
+#include "Blueprint/UserWidget.h"
 #include "GameFramework/GameStateBase.h"
 
 ASQPLobbyGameMode::ASQPLobbyGameMode()
@@ -22,19 +24,44 @@ ASQPLobbyGameMode::ASQPLobbyGameMode()
 	}
 }
 
+void ASQPLobbyGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+}
+
 void ASQPLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	//새로 접속한 플레이어의 컨트롤러를 가져와 로비 UI 생성 함수 호출
-	if (ASQPPlayerController* PC = Cast<ASQPPlayerController>(NewPlayer))
+	PRINTLOGNET(TEXT("Lobby PostLogin Start!"));
+
+	//정상 상황이라면 이 캐스팅은 성공해야 한다
+	ASQPPlayerController* PC = Cast<ASQPPlayerController>(NewPlayer);
+	if (PC == nullptr)
 	{
-		//이 함수는 PlayerController에서 구현
-		PC->Client_CreateLobbyUI(); 
+		return;
 	}
+
+	//전송할 위젯 선택
+	TSubclassOf<UUserWidget> WidgetToShow = nullptr;
+	
+	if (GetNetMode() != NM_DedicatedServer && PC->IsLocalController())
+	{
+		//리슨 서버 측 클라이언트
+		WidgetToShow = ServerSideLobbyMenuWidgetClass;
+	}
+	else
+	{
+		//외부 클라이언트
+		WidgetToShow = ClientSideLobbyMenuWidgetClass;
+	}
+
+	//클라이언트에 지정한 위젯을 생성해서 보여주도록 명령
+	PC->Client_CreateClientSideLobbyWidget(WidgetToShow);
+
+	PRINTLOGNET(TEXT("Lobby PostLogin End!"));
 }
 
-//PlayerState에서 상태가 변경될 때 호출할 수 있도록 함수 추가
 void ASQPLobbyGameMode::OnPlayerReadyStateChanged()
 {
 	CheckAllPlayersReady();

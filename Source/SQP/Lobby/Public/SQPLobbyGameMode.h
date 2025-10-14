@@ -16,6 +16,8 @@ class SQP_API ASQPLobbyGameMode : public AGameModeBase
 
 public:
 	ASQPLobbyGameMode();
+
+	virtual void BeginPlay() override;
 	
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
@@ -24,4 +26,10 @@ public:
 
 	UFUNCTION()
 	void CheckAllPlayersReady();
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> ServerSideLobbyMenuWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> ClientSideLobbyMenuWidgetClass;
 };

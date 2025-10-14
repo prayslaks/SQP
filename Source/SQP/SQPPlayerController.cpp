@@ -5,7 +5,10 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
+#include "SQP.h"
+#include "SQPLobbyGameMode.h"
 #include "SQPPlayerState.h"
+#include "Blueprint/UserWidget.h"
 
 class ASQPPlayerState;
 
@@ -29,9 +32,16 @@ void ASQPPlayerController::RequestSetReadyState(bool bNewReadyState)
 	Server_SetReadyState(bNewReadyState);
 }
 
-void ASQPPlayerController::Client_CreateLobbyUI_Implementation()
+void ASQPPlayerController::Client_CreateClientSideLobbyWidget_Implementation(TSubclassOf<UUserWidget> WidgetToShow)
 {
+	PRINTLOGNET(TEXT("Client RPC CreateClientSideLobbyWidget Start!"));
 	
+	//뷰포트에 추가
+	const auto Temp = CreateWidget(GetWorld(), WidgetToShow);
+	Temp->AddToViewport();
+	GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(true);
+	
+	PRINTLOGNET(TEXT("Client RPC CreateClientSideLobbyWidget End!"));
 }
 
 // PlayerState의 OnRep 함수에서 호출되어 실제 UI를 업데이트하는 함수
