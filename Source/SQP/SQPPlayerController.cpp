@@ -5,6 +5,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
+#include "HostSideLobbyMenuWidget.h"
 #include "SQP.h"
 #include "SQPLobbyGameMode.h"
 #include "SQPPlayerState.h"
@@ -32,37 +33,32 @@ void ASQPPlayerController::RequestSetReadyState(bool bNewReadyState)
 	Server_SetReadyState(bNewReadyState);
 }
 
-void ASQPPlayerController::Client_CreateClientSideLobbyWidget_Implementation(TSubclassOf<UUserWidget> WidgetToShow)
+void ASQPPlayerController::Client_CreateLobbyWidget_Implementation(const TSubclassOf<UUserWidget> WidgetToShow)
 {
-	PRINTLOGNET(TEXT("Client RPC CreateClientSideLobbyWidget Start!"));
+	PRINTLOGNET(TEXT("Client RPC CreateLobbyWidget Start!"));
 	
-	//뷰포트에 추가
-	const auto Temp = CreateWidget(GetWorld(), WidgetToShow);
-	Temp->AddToViewport();
+	//뷰포트에 전달받은 위젯 클래스의 인스턴스를 생성하여 추가
+	LobbyMenuWidget = Cast<ULobbyMenuWidgetBase>(CreateWidget(GetWorld(), WidgetToShow));
+	LobbyMenuWidget->AddToViewport();
 	GetWorld()->GetFirstPlayerController()->SetShowMouseCursor(true);
 	
-	PRINTLOGNET(TEXT("Client RPC CreateClientSideLobbyWidget End!"));
+	PRINTLOGNET(TEXT("Client RPC CreateLobbyWidget End!"));
 }
 
-// PlayerState의 OnRep 함수에서 호출되어 실제 UI를 업데이트하는 함수
 void ASQPPlayerController::Client_UpdateReadyStatusInUI_Implementation(bool bIsReady)
 {
 	// 여기에 위젯(UI)의 모습을 변경하는 코드를 작성
 	// 예: if(LobbyWidget) LobbyWidget->SetPlayerReadyIndicator(bIsReady);
 }
 
-// RPC 유효성 검사 함수
-bool ASQPPlayerController::Server_SetReadyState_Validate(bool bNewReadyState)
+void ASQPPlayerController::Server_SetReadyState_Implementation(const bool Value)
 {
-	return true; // 간단한 유효성 검사
-}
-
-// 서버에서 실제 실행되는 함수
-void ASQPPlayerController::Server_SetReadyState_Implementation(bool bNewReadyState)
-{
-	// 자신의 PlayerState를 가져와 상태 변경
-	if (ASQPPlayerState* PS = GetPlayerState<ASQPPlayerState>())
+	if (HasAuthority())
 	{
-		PS->SetReadyState(bNewReadyState);
+		//자신의 플레이어 스테이트에 접근하여 변경
+		if (ASQPPlayerState* PS = GetPlayerState<ASQPPlayerState>())
+		{
+			PS->SetReadyState(Value);
+		}	
 	}
 }

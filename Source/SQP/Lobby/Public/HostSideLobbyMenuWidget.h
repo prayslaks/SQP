@@ -3,21 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LobbyMenuWidgetBase.h"
 #include "Blueprint/UserWidget.h"
-#include "ClientSideLobbyMenuWidget.generated.h"
+#include "HostSideLobbyMenuWidget.generated.h"
 
 class UButton;
 class UTextBlock;
 
 UCLASS()
-class SQP_API UClientSideLobbyMenuWidget : public UUserWidget
+class SQP_API UHostSideLobbyMenuWidget : public ULobbyMenuWidgetBase
 {
 	GENERATED_BODY()
 
 public:
+	UHostSideLobbyMenuWidget();
+	
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UTextBlock> NumOfPlayers;
-
-	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UButton> ReadyButton;
+	TObjectPtr<UButton> StartButton;
+	
+	virtual void UpdateWidget() override;
 };

@@ -4,20 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "ServerSideLobbyMenuWidget.generated.h"
+#include "ClientSideLobbyPlayerInfoWidget.generated.h"
 
-class UButton;
 class UTextBlock;
 
 UCLASS()
-class SQP_API UServerSideLobbyMenuWidget : public UUserWidget
+class SQP_API UClientSideLobbyPlayerInfoWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
+	virtual void NativeConstruct() override;
+	
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UTextBlock> NumOfPlayers;
-
-	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UButton> StartButton;
+	TObjectPtr<UTextBlock> NameTextBlock;	
 };

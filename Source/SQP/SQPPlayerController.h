@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "SQPPlayerController.generated.h"
 
+class ULobbyMenuWidgetBase;
 class UInputMappingContext;
 
 /**
@@ -18,12 +19,9 @@ class ASQPPlayerController : public APlayerController
 	GENERATED_BODY()
 	
 protected:
-
-	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category ="Input", meta = (AllowPrivateAccess = "true"))
 	TArray<UInputMappingContext*> DefaultMappingContexts;
 
-	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;
 
 public:
@@ -35,12 +33,13 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_UpdateReadyStatusInUI(bool bIsReady);
 
-	//서버에서 포스트 로그인 후 클라이언트에 전용 로비 UI를 띄오도록 명령한다
-	UFUNCTION(Client, Reliable)
-	void Client_CreateClientSideLobbyWidget(TSubclassOf<UUserWidget> WidgetToShow);
 
-protected:
-	// 클라이언트에서 서버로 준비 상태 변경을 요청하는 RPC
-	UFUNCTION(Server, Reliable, WithValidation)
-	void Server_SetReadyState(bool bNewReadyState);
+	UPROPERTY()
+	TObjectPtr<ULobbyMenuWidgetBase> LobbyMenuWidget;
+	
+	UFUNCTION(Client, Reliable)
+	void Client_CreateLobbyWidget(TSubclassOf<UUserWidget> WidgetToShow);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_SetReadyState(bool Value);
 };

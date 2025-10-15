@@ -2,6 +2,7 @@
 
 #include "SQPLobbyGameMode.h"
 #include "SQP.h"
+#include "SQPGameState.h"
 #include "SQPPlayerController.h"
 #include "SQPPlayerState.h"
 #include "Blueprint/UserWidget.h"
@@ -22,11 +23,20 @@ ASQPLobbyGameMode::ASQPLobbyGameMode()
 	{
 		PlayerStateClass = Finder.Class;
 	}
+
+	if (static ConstructorHelpers::FClassFinder<ASQPGameState>
+		Finder(TEXT("/Game/Splatoon/Blueprint/LobbyLevel/BP_SQPGameState.BP_SQPGameState_C"));
+		Finder.Succeeded())
+	{
+		GameStateClass = Finder.Class;
+	}
 }
 
 void ASQPLobbyGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetNetMode();
 }
 
 void ASQPLobbyGameMode::PostLogin(APlayerController* NewPlayer)
@@ -36,18 +46,18 @@ void ASQPLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 	PRINTLOGNET(TEXT("Lobby PostLogin Start!"));
 
 	//정상 상황이라면 이 캐스팅은 성공해야 한다
-	ASQPPlayerController* PC = Cast<ASQPPlayerController>(NewPlayer);
-	if (PC == nullptr)
+	ASQPPlayerController* NewPC = Cast<ASQPPlayerController>(NewPlayer);
+	if (NewPC == nullptr)
 	{
 		return;
 	}
 
 	//전송할 위젯 선택
-	TSubclassOf<UUserWidget> WidgetToShow = nullptr;
+	TSubclassOf<UUserWidget> WidgetToShow;
 	
-	if (GetNetMode() != NM_DedicatedServer && PC->IsLocalController())
+	if (GetNetMode() != NM_DedicatedServer && NewPC->IsLocalController())
 	{
-		//리슨 서버 측 클라이언트
+		//리슨 서버 호스트
 		WidgetToShow = ServerSideLobbyMenuWidgetClass;
 	}
 	else
@@ -57,7 +67,23 @@ void ASQPLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 	}
 
 	//클라이언트에 지정한 위젯을 생성해서 보여주도록 명령
-	PC->Client_CreateClientSideLobbyWidget(WidgetToShow);
+	NewPC->Client_CreateLobbyWidget(WidgetToShow);
+
+	//새로 들어온 플레이어에 이름을 할당
+	if (const auto PlayerState = NewPlayer->PlayerState)
+	{
+		const FString RandomPlayerName = FString::Printf(TEXT("Player_%d"), GameState->PlayerArray.Num());
+		PlayerState->SetPlayerName(RandomPlayerName);
+	}
+
+	//게임 스테이트에 새로운 플레이어의 정보 추가
+	if (const auto GS = Cast<ASQPGameState>(GetWorld()->GetGameState()))
+	{
+		if (const auto NewPS = NewPC->GetPlayerState<ASQPPlayerState>())
+		{
+			GS->ExistingPlayerInfoArray.Emplace(NewPS->GetPlayerInfo());	
+		}
+	}
 
 	PRINTLOGNET(TEXT("Lobby PostLogin End!"));
 }
