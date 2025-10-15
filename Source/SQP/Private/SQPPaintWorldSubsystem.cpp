@@ -129,12 +129,13 @@ void USQPPaintWorldSubsystem::GetRenderTargetFromHit(const FHitResult& Hit, UTex
 
 		//노말 값을 가지는 렌더 타겟
 		constexpr ETextureRenderTargetFormat NormalFormat = RTF_RGBA16f;
-		const auto CreatedNormalRenderTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 1024, 1024, NormalFormat, FLinearColor(0.5, 0.5, 1.0, 1.0), false);
+		const auto CreatedNormalRenderTarget = UKismetRenderingLibrary::CreateRenderTarget2D(GetWorld(), 1024, 1024, NormalFormat, FLinearColor(0, 0, 1.0, 1.0), false);
 		if (CreatedNormalRenderTarget)
 		{
 			CreatedNormalRenderTarget->CompressionSettings = TC_VectorDisplacementmap;
 			CreatedNormalRenderTarget->MipGenSettings = TMGS_NoMipmaps;
 			CreatedNormalRenderTarget->UpdateResource();
+			CreatedNormalRenderTarget->SRGB = false;
 		}
 
 		//새롭게 할당받은 렌더 타겟 텍스처를 머터리얼에 적용
@@ -159,7 +160,7 @@ void USQPPaintWorldSubsystem::PaintRenderTarget(const uint8 BrushIndex, const fl
 
 	if (NormalRenderTarget)
 	{
-		PaintNormalRenderTarget(NormalTextureArray[BrushIndex], BrushSize, DrawLocation, NormalRenderTarget);
+		PaintNormalRenderTarget(NormalTextureArray[BrushIndex], ColorTextureArray[BrushIndex], BrushSize, DrawLocation, NormalRenderTarget);
 	}
 }
 
@@ -190,17 +191,18 @@ void USQPPaintWorldSubsystem::PaintColorRenderTarget(UTexture2D* BrushTexture, c
 	UKismetRenderingLibrary::EndDrawCanvasToRenderTarget(GetWorld(), Context);
 }
 
-void USQPPaintWorldSubsystem::PaintNormalRenderTarget(UTexture2D* BrushTexture, const float BrushSize, const FVector2D& DrawLocation, UTextureRenderTarget2D* NormalRenderTarget)
+void USQPPaintWorldSubsystem::PaintNormalRenderTarget(UTexture2D* BrushTexture, UTexture2D* BrushAlphaTexture, const float BrushSize, const FVector2D& DrawLocation, UTextureRenderTarget2D* NormalRenderTarget)
 {
 	//만약 컬러 브러시 머터리얼의 다이나믹 인스턴스가 없다면
 	if (NormalBrushMaterialDynamicInstance == nullptr)
 	{
 		//새로운 머터리얼을 하나 생성한다
-		NormalBrushMaterialDynamicInstance = UKismetMaterialLibrary::CreateDynamicMaterialInstance(GetWorld(), ColorBrushMaterialBase);
+		NormalBrushMaterialDynamicInstance = UKismetMaterialLibrary::CreateDynamicMaterialInstance(GetWorld(), NormalBrushMaterialBase);
 	}
 	
 	//브러시 머터리얼의 텍스처 패러미터를 요청한 텍스처로 교체
 	NormalBrushMaterialDynamicInstance->SetTextureParameterValue(FName("BrushTexture"), BrushTexture);
+	NormalBrushMaterialDynamicInstance->SetTextureParameterValue(FName("BrushAlphaTexture"), BrushAlphaTexture);
 
 	//드로우 객체 준비
 	UCanvas* Canvas = NewObject<UCanvas>();

@@ -29,7 +29,7 @@ void ASQPPaintBallProjectile::OnOverlapBeginCallback(UPrimitiveComponent* Overla
 	
 	if (HasAuthority())
 	{
-		//채색 시도 명령
+		//모든 클라이언트에 채색 시도 명령
 		Multicast_TryPaint();
 		
 		//비활성화

@@ -26,4 +26,21 @@ protected:
 	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;
 
+public:
+	// UI에서 호출할 함수. 내부적으로 서버 RPC를 호출
+	UFUNCTION(BlueprintCallable)
+	void RequestSetReadyState(bool bNewReadyState);
+    
+	// UI 업데이트를 위한 클라이언트 함수
+	UFUNCTION(Client, Reliable)
+	void Client_UpdateReadyStatusInUI(bool bIsReady);
+
+	//서버에서 포스트 로그인 후 클라이언트에 전용 로비 UI를 띄오도록 명령한다
+	UFUNCTION(Client, Reliable)
+	void Client_CreateClientSideLobbyWidget(TSubclassOf<UUserWidget> WidgetToShow);
+
+protected:
+	// 클라이언트에서 서버로 준비 상태 변경을 요청하는 RPC
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SetReadyState(bool bNewReadyState);
 };
