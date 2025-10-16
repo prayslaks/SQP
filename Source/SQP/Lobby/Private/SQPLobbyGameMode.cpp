@@ -6,6 +6,7 @@
 #include "SQPPlayerController.h"
 #include "SQPPlayerState.h"
 #include "Blueprint/UserWidget.h"
+#include "GameFramework/GameSession.h"
 #include "GameFramework/GameStateBase.h"
 
 ASQPLobbyGameMode::ASQPLobbyGameMode()
@@ -35,8 +36,6 @@ ASQPLobbyGameMode::ASQPLobbyGameMode()
 void ASQPLobbyGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-
-	GetNetMode();
 }
 
 void ASQPLobbyGameMode::PostLogin(APlayerController* NewPlayer)
@@ -75,18 +74,29 @@ void ASQPLobbyGameMode::PostLogin(APlayerController* NewPlayer)
 		const FString RandomPlayerName = FString::Printf(TEXT("Player_%d"), GameState->PlayerArray.Num());
 		PlayerState->SetPlayerName(RandomPlayerName);
 	}
-
+	
 	//게임 스테이트에 새로운 플레이어의 정보 추가
 	if (const auto GS = Cast<ASQPGameState>(GetWorld()->GetGameState()))
 	{
-		if (const auto NewPS = NewPC->GetPlayerState<ASQPPlayerState>())
-		{
-			GS->ExistingPlayerInfoArray.Emplace(NewPS->GetPlayerInfo());	
-		}
+		GS->OnNewPlayerLogin(NewPC);
 	}
 
 	PRINTLOGNET(TEXT("Lobby PostLogin End!"));
 }
+
+void ASQPLobbyGameMode::Logout(AController* Exiting)
+{
+	Super::Logout(Exiting);
+
+	//게임 스테이트에 나가는 플레이어의 정보 제거
+	if (const auto GS = Cast<ASQPGameState>(GetWorld()->GetGameState()))
+	{
+		//GS->OnNewPlayerLogin(NewPC);
+	}
+}
+
+
+
 
 void ASQPLobbyGameMode::OnPlayerReadyStateChanged()
 {
@@ -112,7 +122,7 @@ void ASQPLobbyGameMode::CheckAllPlayersReady()
 	{
 		//한 명이라도 준비가 안됐거나 캐스팅 실패 시 false
 		ASQPPlayerState* MyPS = Cast<ASQPPlayerState>(PS);
-		if (!MyPS || !MyPS->IsReady())
+		if (!MyPS || !MyPS->GetIsReady())
 		{
 			bAllPlayersReady = false;
 			break;
@@ -126,6 +136,31 @@ void ASQPLobbyGameMode::CheckAllPlayersReady()
 		{
 			// bAbsolute 옵션을 false로 하여 ?listen 같은 옵션을 유지하지 않도록 함
 			World->ServerTravel("/Game/Maps/MainGameMap", false);
+		}
+	}
+}
+
+void ASQPLobbyGameMode::KickPlayerByUniqueId(const FString& PlayerUniqueId)
+{
+	const FText KickReason = FText::FromString(TEXT("호스트에 의해 로비에서 추방되었습니다."));
+
+	// 모든 플레이어 컨트롤러를 순회하여 ID가 일치하는 플레이어를 찾습니다.
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		if (APlayerController* PC = It->Get(); PC && PC->PlayerState)
+		{
+			// PlayerState에서 고유 ID를 가져와 비교합니다.
+			if (PC->PlayerState->GetUniqueId()->ToString() == PlayerUniqueId)
+			{
+				//게임 세션을 통해서 방출한다
+				if (GameSession)
+				{
+					GameSession->KickPlayer(PC, KickReason);
+				}
+                
+				// 찾았으므로 루프를 종료합니다.
+				return; 
+			}
 		}
 	}
 }

@@ -20,7 +20,7 @@ public:
 
 	void SetReadyState(bool Value);
 
-	bool IsReady() const { return bIsReady; }
+	bool GetIsReady() const { return bIsReady; }
 
 	UFUNCTION()
 	FPlayerInfo GetPlayerInfo();

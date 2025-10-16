@@ -26,6 +26,7 @@ struct FPlayerInfo
 	FPlayerInfo() {}
 	FPlayerInfo(const FString& InPlayerUniqueId, const FString& InPlayerName) : PlayerUniqueId(InPlayerUniqueId), PlayerName(InPlayerName) {}
 
+	//직렬화
 	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess)
 	{
 		bOutSuccess = true; // 일단 성공했다고 가정하고 시작!
@@ -35,6 +36,12 @@ struct FPlayerInfo
 		Ar << PlayerName;
         
 		return true;
+	}
+
+	//비교 연산자 오버로딩
+	bool operator==(const FPlayerInfo& Other) const
+	{
+		return this->PlayerUniqueId == Other.PlayerUniqueId;
 	}
 };
 
@@ -59,11 +66,17 @@ public:
 	
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
+	virtual void Logout(AController* Exiting) override;
+
 	UFUNCTION()
 	void OnPlayerReadyStateChanged();
 
 	UFUNCTION()
 	void CheckAllPlayersReady();
+
+
+	UFUNCTION()
+	void KickPlayerByUniqueId(const FString& PlayerUniqueId);
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> ServerSideLobbyMenuWidgetClass;

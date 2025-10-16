@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LobbyPlayerInfoWidgetBase.h"
 #include "Blueprint/UserWidget.h"
 #include "HostSideLobbyPlayerInfoWidget.generated.h"
 
@@ -10,16 +11,17 @@ class UButton;
 class UTextBlock;
 
 UCLASS()
-class SQP_API UHostSideLobbyPlayerInfoWidget : public UUserWidget
+class SQP_API UHostSideLobbyPlayerInfoWidget : public ULobbyPlayerInfoWidgetBase
+
 {
 	GENERATED_BODY()
 
 public:
 	virtual void NativeConstruct() override;
-	
-	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<UTextBlock> NameTextBlock;
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> KickButton;
+
+	UFUNCTION()
+	void OnClickKickButton();
 };

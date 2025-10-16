@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "LobbyMenuWidgetBase.generated.h"
 
+struct FPlayerInfo;
 class UVerticalBox;
 class UTextBlock;
 
@@ -25,10 +26,16 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> PlayerInfoWidgetClass;
+	
+	UFUNCTION()
+	virtual void OnOtherPlayerEnter(FPlayerInfo& NewPlayerInfo);
 
 	UFUNCTION()
-	void UpdateLobbyPlayerInfo();
+	virtual void OnOtherPlayerExit(FPlayerInfo& OldPlayerInfo);
 
 	UFUNCTION()
-	virtual void UpdateWidget();
+	virtual void OnPostLogin(const TArray<FPlayerInfo>& ExistingPlayerInfoArray);
+
+	UPROPERTY()
+	TMap<FString, UUserWidget*> UniqueIdToWidgetMap;
 };

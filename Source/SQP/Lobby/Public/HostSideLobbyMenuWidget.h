@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "LobbyMenuWidgetBase.h"
-#include "Blueprint/UserWidget.h"
 #include "HostSideLobbyMenuWidget.generated.h"
 
 class UButton;
@@ -21,5 +20,7 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> StartButton;
 	
-	virtual void UpdateWidget() override;
+	virtual void OnOtherPlayerEnter(FPlayerInfo& NewPlayerInfo) override;
+
+	virtual void OnOtherPlayerExit(FPlayerInfo& OldPlayerInfo) override;
 };

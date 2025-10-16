@@ -22,6 +22,10 @@ public:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UToggleButton> ReadyButton;
 
+	virtual void OnOtherPlayerEnter(FPlayerInfo& NewPlayerInfo) override;
+
+	virtual void OnOtherPlayerExit(FPlayerInfo& OldPlayerInfo) override;
+
 protected:
 	UFUNCTION()
 	void OnReadyButtonClicked(bool Value);
