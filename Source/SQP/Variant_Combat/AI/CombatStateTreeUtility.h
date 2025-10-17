@@ -198,7 +198,7 @@ struct FStateTreeFaceLocationInstanceData
 
 	/** Location that will be faced towards */
 	UPROPERTY(EditAnywhere, Category = Parameter)
-	FVector FaceLocation;
+	FVector FaceLocation = FVector::ZeroVector;
 };
 
 /**
@@ -283,11 +283,11 @@ struct FStateTreeGetPlayerInfoInstanceData
 
 	/** Last known location for the target */
 	UPROPERTY(VisibleAnywhere)
-	FVector TargetPlayerLocation;
+	FVector TargetPlayerLocation = FVector::ZeroVector;
 
 	/** Distance to the target */
 	UPROPERTY(VisibleAnywhere)
-	float DistanceToTarget;
+	float DistanceToTarget = 0.f;
 };
 
 /**

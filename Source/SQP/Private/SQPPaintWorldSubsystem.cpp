@@ -1,6 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SQPPaintWorldSubsystem.h"
+
+#include "UIManager.h"
 #include "Engine/Canvas.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Kismet/GameplayStatics.h"
@@ -137,11 +139,12 @@ void USQPPaintWorldSubsystem::GetRenderTargetFromHit(const FHitResult& Hit, UTex
 			CreatedNormalRenderTarget->UpdateResource();
 			CreatedNormalRenderTarget->SRGB = false;
 		}
-
+		
 		//새롭게 할당받은 렌더 타겟 텍스처를 머터리얼에 적용
 		CreatedMaterialInstance->SetTextureParameterValue(FName("ColorRenderTarget"), CreatedColorRenderTarget);
 		CreatedMaterialInstance->SetTextureParameterValue(FName("NormalRenderTarget"), CreatedNormalRenderTarget);
-
+		
+		
 		//새롭게 할당받은 다이나믹 머터리얼을 충돌 컴포넌트에 적용
 		Hit.Component->SetMaterial(SectionIndex, CreatedMaterialInstance);
 
@@ -172,9 +175,11 @@ void USQPPaintWorldSubsystem::PaintColorRenderTarget(UTexture2D* BrushTexture, c
 		//새로운 머터리얼을 하나 생성한다
 		ColorBrushMaterialDynamicInstance = UKismetMaterialLibrary::CreateDynamicMaterialInstance(GetWorld(), ColorBrushMaterialBase);
 	}
-	
+
+	//auto UIManager = GetWorld()->GetGameInstance()->GetSubsystem<UUIManager>();
 	//브러시 머터리얼의 텍스처 패러미터를 요청한 텍스처로 교체
 	ColorBrushMaterialDynamicInstance->SetTextureParameterValue(FName("BrushTexture"), BrushTexture);
+	//ColorBrushMaterialDynamicInstance->SetVectorParameterValue(FName("PaintColor"), UIManager->GetCurrentColor());
 
 	//드로우 객체 준비
 	UCanvas* Canvas = NewObject<UCanvas>();

@@ -9,7 +9,7 @@
 
 UUIManager::UUIManager()
 {
-	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("Class'/Game/Splatoon/UI/WBP_MainUI.WBP_MainUI_C'"));
+	ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("Class'/Game/Splatoon/UI/WBP_MainUI.WBP_MainUI_C'"));
 	if (WidgetClassFinder.Succeeded())
 	{
 		MainUIClass = WidgetClassFinder.Class;
