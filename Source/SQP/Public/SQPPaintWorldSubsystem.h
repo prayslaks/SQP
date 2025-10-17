@@ -31,7 +31,7 @@ public:
 
 	//지정 텍스처로 노말 렌더 타겟 텍스처에 드로잉을 시도한다
 	UFUNCTION(BlueprintCallable)
-	void PaintNormalRenderTarget(UTexture2D* BrushTexture, const float BrushSize, const FVector2D& DrawLocation, UTextureRenderTarget2D* NormalRenderTarget);
+	void PaintNormalRenderTarget(UTexture2D* BrushTexture, UTexture2D* BrushAlphaTexture, const float BrushSize, const FVector2D& DrawLocation, UTextureRenderTarget2D* NormalRenderTarget);
 
 protected:
 	//컬러 페인트 텍스처 배열

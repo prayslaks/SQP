@@ -6,9 +6,8 @@
 #include "GameFramework/GameStateBase.h"
 #include "SQPGameState.generated.h"
 
-/**
- * 
- */
+struct FPlayerInfo;
+
 UCLASS()
 class SQP_API ASQPGameState : public AGameStateBase
 {

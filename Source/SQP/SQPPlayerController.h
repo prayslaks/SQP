@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "SQPPlayerController.generated.h"
 
+struct FPlayerInfo;
+class ULobbyMenuWidgetBase;
 class UInputMappingContext;
 
 /**
@@ -18,12 +20,8 @@ class ASQPPlayerController : public APlayerController
 	GENERATED_BODY()
 	
 protected:
-
-	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category ="Input", meta = (AllowPrivateAccess = "true"))
 	TArray<UInputMappingContext*> DefaultMappingContexts;
 
-	/** Input mapping context setup */
 	virtual void SetupInputComponent() override;
-
 };

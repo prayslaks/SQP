@@ -36,7 +36,6 @@ void AProjectileBase::BeginPlay()
 
 	if (HasAuthority() == false)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("Client Projectile Deactivate"));
 		ProjectileMoveComp->Deactivate();
 	}
 }
@@ -57,21 +56,6 @@ void AProjectileBase::PreReplication(IRepChangedPropertyTracker& ChangedProperty
 	DOREPLIFETIME_ACTIVE_OVERRIDE(AProjectileBase, bIsActive, bIsActive);
 }
 
-void AProjectileBase::OnRep_IsActive()
-{
-	if (bIsActive)
-	{
-		SetActorHiddenInGame(false);
-		SetActorEnableCollision(true);
-	}
-	else
-	{
-		SetActorHiddenInGame(true);
-		SetActorEnableCollision(false);
-		ProjectileMoveComp->Deactivate();
-	}
-}
-
 void AProjectileBase::ActiveProjectile(const FTransform& FireTransform, const float InitSpeed)
 {
 	if (HasAuthority())
@@ -82,7 +66,6 @@ void AProjectileBase::ActiveProjectile(const FTransform& FireTransform, const fl
 		//발사체 컴포넌트 활성화
 		ProjectileMoveComp->Velocity = InitSpeed * GetActorForwardVector();
 		ProjectileMoveComp->Activate();
-		
 		
 		//활성화
 		bIsActive = true;
@@ -140,11 +123,6 @@ void AProjectileBase::InactivateProjectile()
 					Subsystem->PushProjectile(this);
 				}
 			}	
-		}
-		else
-		{
-			//클라이언트에 파괴 명령
-			TearOff();
 		}
 	}
 }
