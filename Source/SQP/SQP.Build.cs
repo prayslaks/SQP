@@ -18,15 +18,21 @@ public class SQP : ModuleRules
 			"AIModule",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
+			//UI
 			"UMG",
 			"Slate",
 			"SlateCore",
+			//커스텀
 			"GentleKit",
+			//나이아가라
 			"Niagara",
+			//멀티플레이
 			"NetCore",
 			"OnlineSubsystem", 
 			"OnlineSubsystemUtils",
 			"Sockets",
+			//클립보드
+			"ApplicationCore",
 			"Synthesis",
 		});
 
@@ -40,6 +46,13 @@ public class SQP : ModuleRules
 			"SQP/Variant_SideScrolling",
 			"SQP/Variant_SideScrolling/Gameplay",
 			"SQP/Variant_SideScrolling/AI",
+			
+			Path.Combine(ModuleDirectory, "Lobby/Default", "Public"),
+			Path.Combine(ModuleDirectory, "Lobby/Widget", "Public"),
+			
+			Path.Combine(ModuleDirectory, "Main/Default", "Public"),
+			Path.Combine(ModuleDirectory, "Main/Widget", "Public"),
+			
 			Path.Combine(ModuleDirectory, "UI", "Public"),
 			Path.Combine(ModuleDirectory, "Lobby", "Public"),
 			Path.Combine(ModuleDirectory, "Yeomin", "Public"),
