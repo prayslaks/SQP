@@ -7,6 +7,8 @@
 #include "GameFramework/PlayerController.h"
 #include "SQP_PC_Lobby.generated.h"
 
+class ASQP_GM_Lobby;
+enum class ELobbyState : uint8;
 class ULobbyMenuWidgetBase;
 
 UCLASS()
@@ -27,13 +29,9 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_OnPostLogin(const TArray<FPlayerInfo>& ExistingPlayerInfoArray);
 
-	//서버에게 준비 상태를 변경해달라고 요청하는 Server RPC
+	//서버에게 자신의 로비 상태를 변경해달라고 요청하는 Server RPC
 	UFUNCTION(Server, Reliable)
-	void Server_SetReadyState(bool Value);
-
-	//클라이언트에게 특정 플레이어의 준비 상태를 확인하라고 전파하는 Multicast RPC
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_UpdateReadyState(APlayerController* ReadyPlayer, bool Value);
+	void Server_SetLobbyState(ELobbyState Value);
 
 	//로비에서 자발적으로 나간다
 	UFUNCTION()
@@ -46,6 +44,10 @@ public:
 	//서버의 명령을 받아서 생성한 전용 로비 위젯을 가리키는 포인터 
 	UPROPERTY()
 	TObjectPtr<ULobbyMenuWidgetBase> LobbyMenuWidget;
+
+	//호스트의 게임 모드
+	UFUNCTION()
+	ASQP_GM_Lobby* GetHostGameMode() const;
 
 	
 	virtual void ClientWasKicked_Implementation(const FText& KickReason) override;

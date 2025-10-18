@@ -40,6 +40,11 @@ void ASQP_GM_Lobby::BeginPlay()
 	Super::BeginPlay();
 }
 
+ASQP_PC_Lobby* ASQP_GM_Lobby::GetHostPlayerController() const
+{
+	return Cast<ASQP_PC_Lobby>(GetWorld()->GetFirstPlayerController());
+}
+
 void ASQP_GM_Lobby::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
@@ -99,13 +104,7 @@ void ASQP_GM_Lobby::Logout(AController* Exiting)
 
 
 
-
-void ASQP_GM_Lobby::OnPlayerReadyStateChanged()
-{
-	CheckAllPlayersReady();
-}
-
-void ASQP_GM_Lobby::CheckAllPlayersReady()
+bool ASQP_GM_Lobby::CheckAllPlayersReady() const
 {
 	//최소 시작 인원
 	constexpr int32 MinPlayersToStart = 2;
@@ -113,31 +112,37 @@ void ASQP_GM_Lobby::CheckAllPlayersReady()
 	//최소 인원 미달
 	if (GetWorld()->GetGameState()->PlayerArray.Num() < MinPlayersToStart)
 	{
-		return;
+		PRINTLOGNET(TEXT("There is no Enough Player!"));
+		return false;
 	}
-
-	//초기값
-	bool bAllPlayersReady = true;
-
+	
 	//게임 스테이트의 플레이어 목록을 순회
 	for (APlayerState* PS : GetWorld()->GetGameState()->PlayerArray)
 	{
-		//한 명이라도 준비가 안됐거나 캐스팅 실패 시 false
-		if (ASQP_PS_Lobby* MyPS = Cast<ASQP_PS_Lobby>(PS); !MyPS || !MyPS->READY_STATE)
+		//서버의 플레이어 컨트롤러라면 건너뛴다
+		if (PS->GetPlayerController() == GetWorld()->GetFirstPlayerController())
 		{
-			bAllPlayersReady = false;
-			break;
+			continue;
+		}
+		
+		//한 명이라도 준비가 안됐다면 게임을 시작할 준비가 되지 않은 것이다
+		if (const auto MyPS = Cast<ASQP_PS_Lobby>(PS); MyPS && MyPS->LOBBY_STATE == ELobbyState::UnreadyClient)
+		{
+			PRINTLOGNET(TEXT("There is Unready Player!"));
+			return false;
 		}
 	}
+	
+	return true;
+}
 
-	if (bAllPlayersReady)
+void ASQP_GM_Lobby::MoveToGameMap()
+{
+	//이동 가능 상태
+	if (CheckAllPlayersReady())
 	{
-		// 모든 플레이어 준비 완료! 메인 게임 맵으로 이동
-		if (UWorld* World = GetWorld())
-		{
-			// bAbsolute 옵션을 false로 하여 ?listen 같은 옵션을 유지하지 않도록 함
-			World->ServerTravel("/Game/Maps/MainGameMap", false);
-		}
+		//클라이언트와 함께 게임 맵으로 이동
+		GetWorld()->ServerTravel("Lvl_ThirdPerson");
 	}
 }
 
