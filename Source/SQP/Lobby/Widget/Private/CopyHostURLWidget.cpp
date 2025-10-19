@@ -27,6 +27,20 @@ void UCopyHostURLWidget::NativeConstruct()
 
 	//알림 텍스트 비가시화
 	CopyNotificationTextBlock->SetVisibility(ESlateVisibility::Hidden);
+
+	//타이머 델리게이트
+	HideNotificationTimerDelegate.BindLambda([this]()
+	{
+		CopyNotificationTextBlock->SetVisibility(ESlateVisibility::Hidden);
+	});
+}
+
+void UCopyHostURLWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	//타이머 정리
+	GetWorld()->GetTimerManager().ClearTimer(HideNotificationTimerHandle);
 }
 
 void UCopyHostURLWidget::OnCopyHostURLButtonClicked()
@@ -38,8 +52,5 @@ void UCopyHostURLWidget::OnCopyHostURLButtonClicked()
 	CopyNotificationTextBlock->SetVisibility(ESlateVisibility::Visible);
 
 	//딜레이 후에 알림 텍스트 비가시화
-	GetWorld()->GetTimerManager().SetTimer(HideNotificationTimerHandle, FTimerDelegate::CreateLambda([this]()
-	{
-		CopyNotificationTextBlock->SetVisibility(ESlateVisibility::Hidden);
-	}), 1.5f, false);
+	GetWorld()->GetTimerManager().SetTimer(HideNotificationTimerHandle, HideNotificationTimerDelegate, 1.5f, false);
 }

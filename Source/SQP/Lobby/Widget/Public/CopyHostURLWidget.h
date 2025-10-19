@@ -16,6 +16,8 @@ class SQP_API UCopyHostURLWidget : public UUserWidget
 
 public:
 	virtual void NativeConstruct() override;
+
+	virtual void NativeDestruct() override;
 	
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UButton> CopyHostURLButton;
@@ -27,6 +29,8 @@ public:
 	TObjectPtr<UTextBlock> CopyNotificationTextBlock;
 
 	FTimerHandle HideNotificationTimerHandle;
+
+	FTimerDelegate HideNotificationTimerDelegate;
 	
 	UFUNCTION()
 	void OnCopyHostURLButtonClicked();
