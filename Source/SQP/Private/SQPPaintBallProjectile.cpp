@@ -8,8 +8,6 @@
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
 
-class UUIManager;
-
 ASQPPaintBallProjectile::ASQPPaintBallProjectile()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
