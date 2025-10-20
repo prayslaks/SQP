@@ -32,7 +32,7 @@ void ULikeUI::OnRep_UpdateLikes(int32 Num)
 
 void ULikeUI::OnClick()
 {
-	Server_OnLike_Implementation(ClickingActor);
+	Server_OnLike(ClickingActor);
 }
 
 
