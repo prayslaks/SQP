@@ -32,7 +32,8 @@ public class SQP : ModuleRules
 			"OnlineSubsystemUtils",
 			"Sockets",
 			//클립보드
-			"ApplicationCore"
+			"ApplicationCore",
+			"Synthesis",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
@@ -46,12 +47,18 @@ public class SQP : ModuleRules
 			"SQP/Variant_SideScrolling/Gameplay",
 			"SQP/Variant_SideScrolling/AI",
 			
+			//로비
 			Path.Combine(ModuleDirectory, "Lobby/Default", "Public"),
 			Path.Combine(ModuleDirectory, "Lobby/Widget", "Public"),
 			
+			//메인
 			Path.Combine(ModuleDirectory, "Main/Default", "Public"),
 			Path.Combine(ModuleDirectory, "Main/Widget", "Public"),
 			
+			//페인트룸
+			Path.Combine(ModuleDirectory, "PaintRoom/Default", "Public"),
+			
+			Path.Combine(ModuleDirectory, "UI", "Public"),
 			Path.Combine(ModuleDirectory, "Yeomin", "Public"),
 			Path.Combine(ModuleDirectory, "DataAssets", "Public"),
 		});
