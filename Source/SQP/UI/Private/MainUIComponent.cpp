@@ -23,6 +23,7 @@ UMainUIComponent::UMainUIComponent()
 	}
 	LikeUIComp->SetupAttachment(this);
 	LikeUIComp->SetWidgetSpace(EWidgetSpace::World);
+	LikeUIComp->SetRelativeScale3D(FVector(0.5f));
 
 	ConstructorHelpers::FObjectFinder<UInputAction> ToggleMouseAsset(
 		TEXT("'/Game/Splatoon/Input/IA_ToggleMouse.IA_ToggleMouse'")

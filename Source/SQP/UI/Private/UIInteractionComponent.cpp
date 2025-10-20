@@ -26,6 +26,8 @@ UUIInteractionComponent::UUIInteractionComponent()
 	{
 		IMC = IMCAsset.Object;
 	}
+
+	InteractionDistance = 1500.f;
 }
 
 
