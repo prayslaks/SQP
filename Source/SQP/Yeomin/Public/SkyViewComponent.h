@@ -21,6 +21,7 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 public:
+	void OnSkyView();
 	UFUNCTION(Server, Reliable)
 	void Server_SpawnSkyViewPawn();
 	UFUNCTION(BlueprintCallable, Server, Reliable)
@@ -29,8 +30,14 @@ public:
 	void Server_ResetSkyViewLocation(bool isSkyView);
 	UFUNCTION(Server, Reliable)
 	void Server_PossessSkyView(bool isSkyView, APlayerController* PC);
-
-protected:
+	
+	UPROPERTY()
+	TObjectPtr<APlayerController> PlayerController;
+	UPROPERTY()
+	TObjectPtr<class UInputMappingContext> IMC;
+	UPROPERTY()
+	TObjectPtr<class UInputAction> SkyViewAction;
+	
 	UPROPERTY()
 	TObjectPtr<APawn> OwnerPawn;
 	UPROPERTY()
