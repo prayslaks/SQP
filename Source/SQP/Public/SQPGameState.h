@@ -12,8 +12,4 @@ UCLASS()
 class SQP_API ASQPGameState : public AGameStateBase
 {
 	GENERATED_BODY()
-
-public:
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_PaintRenderTarget(FVector Start, FVector End, uint8 BrushIndex, float BrushSize);
 };

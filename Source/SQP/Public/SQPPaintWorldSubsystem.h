@@ -15,13 +15,7 @@ public:
 	//필요한 텍스처와 머터리얼 베이스를 로드하는 생성자
 	USQPPaintWorldSubsystem();
 
-	UFUNCTION()
-	void TryPaint(
-		const FVector& Start,
-		const FVector& End,
-		const uint8& BrushIndex,
-		const float& BrushSize);
-
+	//지정한 패러미터로 라인 트레이스를 실행하고 렌더 타겟을 이용한 채색을 시도한다
 	UFUNCTION()
 	void TryPaintColor(
 		const FVector& Start,
@@ -74,6 +68,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void LoadPaintOfWorld();
 
+	//페인트 실행 데이터 중에서 중요도가 높은 것 위주로 필터링한다 
+	UFUNCTION(BlueprintCallable)
+	TArray<FPaintExecutionData> FilterPrimaryPaintExecutionData(const TArray<FPaintExecutionData>& TargetData, float SimilarityLimit);
+
 	//캔버스 머터리얼 베이스인지 확인
 	UFUNCTION()
 	bool CheckCanvasMaterialBase(UMaterialInterface* Target) const;
@@ -85,12 +83,9 @@ public:
 		UTextureRenderTarget2D*& OutColorRenderTarget,
 		UTextureRenderTarget2D*& OutNormalRenderTarget) const;
 
-	// UFUNCTION()
-	// UTexture2D* CreateTextureFromPixelData(int32 Width, int32 Height, const TArray<FLinearColor>& Pixels);
-
 protected:
-	//페인트 기능의 실행 정보를 저장하는 배열
-	TArray<FPaintExecutionData> PaintExecutionDataArray;
+	//오브젝트 별로 페인트 기능의 실행 정보를 저장하는 맵
+	TMap<FGuid, FPaintExecutionDataWrapper> TemporalPEDContainer;
 	
 	//컬러 페인트 텍스처 배열
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
