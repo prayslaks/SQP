@@ -27,6 +27,7 @@ protected:
 	TObjectPtr<class UInputMappingContext> IMC;
 	UPROPERTY()
 	TObjectPtr<class UInputAction> RightClickAction;
+
 	UFUNCTION()
 	void OnRightClickPressed();
 	void OnRightClickReleased();
@@ -34,5 +35,6 @@ protected:
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
-	
+
+	FVector HitLoc;
 };

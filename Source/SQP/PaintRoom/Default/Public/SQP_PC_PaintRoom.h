@@ -14,7 +14,11 @@ class SQP_API ASQP_PC_PaintRoom : public ASQPPlayerController
 protected:
 	virtual void BeginPlay() override;
 
-public:
+	UPROPERTY()
+	TObjectPtr<UMaterialInstanceDynamic> DynMat;
+	UTexture2D* LoadTextureByIndex(int32 Index);
+	
+public:	
 	virtual void OnPossess(APawn* InPawn) override;
 	UPROPERTY()
 	TObjectPtr<APawn> CurrentPawn;

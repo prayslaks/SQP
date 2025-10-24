@@ -34,8 +34,13 @@ void USwimComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 		if (OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed > 500.f)
 		{
 			ElapsedTime += DeltaTime;
+			Server_BrakingFriction(0.07);
 			Server_ChangeMaxSpeed(
 				UEaseFunctionLibrary::LerpFloatEase(1000.f, 500.f, ElapsedTime / SpeedUpTime, EEaseType::EaseOutQuart));
+		}
+		else
+		{
+			Server_BrakingFriction(1.5);
 		}
 		Server_CheckOnPaint();
 	}
@@ -47,6 +52,10 @@ void USwimComponent::Server_ChangeMaxSpeed_Implementation(float Speed)
 	OwnerCharacter->GetCharacterMovement()->MaxWalkSpeed = Speed;
 }
 
+void USwimComponent::Server_BrakingFriction_Implementation(float Factor)
+{
+	OwnerCharacter->GetCharacterMovement()->BrakingFrictionFactor = Factor;
+}
 
 void USwimComponent::Server_CheckOnPaint_Implementation()
 {

@@ -10,6 +10,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Net/UnrealNetwork.h"
+#include "UI/VREditorUISystem.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -17,7 +19,7 @@ ASQPCharacter::ASQPCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
-		
+
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -51,11 +53,45 @@ ASQPCharacter::ASQPCharacter()
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
+void ASQPCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	DynMat = GetMesh()->CreateAndSetMaterialInstanceDynamic(2);
+}
+
+void ASQPCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (HasAuthority())
+	{
+		DynMat->SetScalarParameterValue(FName("WheelSpeed"), WheelSpeed);
+	}
+	if (IsLocallyControlled())
+	{
+		const FVector InputVec = GetCharacterMovement()->GetLastInputVector();
+		if (InputVec.IsNearlyZero())
+		{
+			Server_ChangeWheelSpeed(0.f);
+			return;
+		}
+		Server_ChangeWheelSpeed(-0.09f);
+	}
+}
+
+void ASQPCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASQPCharacter, WheelSpeed);
+}
+
 void ASQPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
-		
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
@@ -69,8 +105,24 @@ void ASQPCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	}
 	else
 	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogTemplateCharacter, Error,
+		       TEXT(
+			       "'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."
+		       ), *GetNameSafe(this));
 	}
+}
+
+void ASQPCharacter::OnRep_ChangeWheel()
+{
+	if (DynMat)
+	{
+		DynMat->SetScalarParameterValue(FName("WheelSpeed"), WheelSpeed);
+	}
+}
+
+void ASQPCharacter::Server_ChangeWheelSpeed_Implementation(float Speed)
+{
+	WheelSpeed = Speed;
 }
 
 void ASQPCharacter::Move(const FInputActionValue& Value)

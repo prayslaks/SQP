@@ -5,6 +5,9 @@
 
 #include "SkyViewPawn.h"
 #include "SQP_PS_PaintRoom.h"
+#include "TankCharacter.h"
+#include "GameFramework/GameStateBase.h"
+
 
 void ASQP_PC_PaintRoom::Server_PaintColorChange_Implementation(const FLinearColor Value)
 {
@@ -26,7 +29,7 @@ void ASQP_PC_PaintRoom::Server_UpdateLikes_Implementation(int32 LikeNum)
 void ASQP_PC_PaintRoom::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	if (HasAuthority())
 	{
 		SpawnSkyViewPawn();
@@ -36,6 +39,19 @@ void ASQP_PC_PaintRoom::BeginPlay()
 void ASQP_PC_PaintRoom::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+
+	if (ATankCharacter* player = Cast<ATankCharacter>(InPawn))
+	{
+		DynMat = player->GetMesh()->CreateAndSetMaterialInstanceDynamic(0);
+	}
+
+	
+	// int32 Index = GetWorld()->GetGameState()->PlayerArray.IndexOfByKey(this);
+	// UTexture2D* Tex = LoadTextureByIndex(Index);
+	// if (DynMat && Tex)
+	// {
+	// 	DynMat->SetTextureParameterValue(FName("BaseColorTexture"), Tex);
+	// }
 
 	PreviousPawn = CurrentPawn;
 	CurrentPawn = InPawn;
@@ -49,6 +65,13 @@ void ASQP_PC_PaintRoom::OnPossess(APawn* InPawn)
 	{
 		SkyViewPawn->SetActorLocationAndRotation(CamLoc, CamRot);
 	}
+}
+
+UTexture2D* ASQP_PC_PaintRoom::LoadTextureByIndex(int32 Index)
+{
+	FString Path = FString::Printf(
+		TEXT("'/Game/Assets/Tanks/red_tank/Textures/TankTexture/tank_texture_%d.tank_texture_%d'"), Index, Index);
+	return Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *Path));
 }
 
 void ASQP_PC_PaintRoom::SpawnSkyViewPawn()

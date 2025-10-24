@@ -4,9 +4,17 @@
 #include "LikeUI.h"
 #include "MainUIComponent.h"
 #include "SQP.h"
+#include "TankCharacter.h"
 #include "Components/RichTextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
+
+
+void ASQP_PS_PaintRoom::BeginPlay()
+{
+	Super::BeginPlay();
+	
+}
 
 void ASQP_PS_PaintRoom::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {

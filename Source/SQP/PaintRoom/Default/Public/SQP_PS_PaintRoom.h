@@ -14,7 +14,11 @@ class SQP_API ASQP_PS_PaintRoom : public APlayerState
 {
 	GENERATED_BODY()
 
+protected:
+	
+	
 public:
+	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	UPROPERTY()

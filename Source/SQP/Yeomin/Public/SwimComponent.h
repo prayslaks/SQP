@@ -26,6 +26,8 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Server_ChangeMaxSpeed(float Speed);
+	UFUNCTION(Server, Reliable)
+	void Server_BrakingFriction(float Factor);
 
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,

@@ -62,7 +62,6 @@ void UUIInteractionComponent::BeginPlay()
 	}
 }
 
-
 void UUIInteractionComponent::OnRightClickPressed()
 {
 	PressPointerKey(EKeys::LeftMouseButton);
@@ -77,4 +76,20 @@ void UUIInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType
                                             FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	FHitResult HitRes;
+	FVector Start = GetComponentLocation();
+	FVector End = Start + GetForwardVector() * 2500.f;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(GetOwner());
+
+	if (GetWorld()->LineTraceSingleByChannel(HitRes, Start, End, ECC_Visibility, Params))
+	{
+			HitLoc = HitRes.ImpactPoint;
+	}
+	else
+	{
+		HitLoc = End;
+	}
 }

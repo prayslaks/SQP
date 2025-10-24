@@ -18,16 +18,14 @@ UMainUIComponent::UMainUIComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	LikeUIComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("LikeWidget"));
-
 	ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(
 		TEXT("Class'/Game/Splatoon/UI/WBP_LikeUI.WBP_LikeUI_C'"));
 	if (WidgetClassFinder.Succeeded())
 	{
 		LikeUIComp->SetWidgetClass(WidgetClassFinder.Class);
 	}
-	LikeUIComp->SetupAttachment(this);
 	LikeUIComp->SetWidgetSpace(EWidgetSpace::World);
-	LikeUIComp->SetRelativeScale3D(FVector(1.f,0.4f,0.2f));
+	LikeUIComp->SetupAttachment(this);
 
 	ConstructorHelpers::FObjectFinder<UInputAction> ToggleMouseAsset(
 		TEXT("'/Game/Splatoon/Input/IA_ToggleMouse.IA_ToggleMouse'")
@@ -68,15 +66,15 @@ void UMainUIComponent::Server_CountLike_Implementation(class ASQP_PS_PaintRoom* 
 void UMainUIComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	InteractionComp = GetOwner()->GetComponentByClass<UUIInteractionComponent>();
 
-	LikeUIComp->SetupAttachment(GetOwner()->GetRootComponent());
-	LikeUIComp->SetRelativeLocation(FVector(0, 0, 650));
-	ULikeUI* LikeUI = Cast<ULikeUI>(LikeUIComp->GetWidget());
-	LikeUI->LikeBtn->OnPressed.AddDynamic(this, &UMainUIComponent::OnClick);
+	if (ULikeUI* LikeUI = Cast<ULikeUI>(LikeUIComp->GetWidget()))
+	{
+		LikeUI->LikeBtn->OnPressed.AddDynamic(this, &UMainUIComponent::OnClick);
+	}
+	LikeUIComp->SetRelativeLocation(FVector(0, 0.f, 0.f));
 
 	UIManager = GetWorld()->GetGameInstance()->GetSubsystem<UUIManager>();
-	
+
 	// Only hide local player's LikeUI
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
 	if (OwnerPawn->IsLocallyControlled())
@@ -85,7 +83,6 @@ void UMainUIComponent::BeginPlay()
 		LikeUIComp->SetVisibility(false);
 		LikeUIComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		// Enhanced Input Subsystem 등록
 		PC = Cast<APlayerController>(OwnerPawn->GetController());
 		if (PC)
 		{
@@ -94,8 +91,6 @@ void UMainUIComponent::BeginPlay()
 			{
 				InputSubsystem->AddMappingContext(IMC, 0);
 			}
-
-			// 입력 바인딩
 			if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PC->InputComponent))
 			{
 				if (ToggleMouseAction)

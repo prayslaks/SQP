@@ -24,6 +24,8 @@ void ASQPPaintBallProjectile::BeginPlay()
 		//바인드
 		SphereComp->OnComponentBeginOverlap.AddDynamic(this, &ASQPPaintBallProjectile::OnOverlapBeginCallback);
 	}
+
+	DynMat = FindComponentByClass<UStaticMeshComponent>()->CreateAndSetMaterialInstanceDynamic(0);
 }
 
 void ASQPPaintBallProjectile::OnOverlapBeginCallback(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -39,6 +41,20 @@ void ASQPPaintBallProjectile::OnOverlapBeginCallback(UPrimitiveComponent* Overla
 
 		//비활성화
 		InactivateProjectile();
+	}
+}
+
+void ASQPPaintBallProjectile::SetPaintColor(const FLinearColor& Value)
+{
+	PaintColor = Value;
+	Multicast_ColorPaintBall(Value);
+}
+
+void ASQPPaintBallProjectile::Multicast_ColorPaintBall_Implementation(FLinearColor Color)
+{
+	if (DynMat)
+	{
+		DynMat->SetVectorParameterValue(TEXT("PaintBallColor"), Color);
 	}
 }
 

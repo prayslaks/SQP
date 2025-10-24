@@ -20,15 +20,12 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void Server_CountLike(class ASQP_PS_PaintRoom* TargetPS);
 	virtual void BeginPlay() override;
-
-	UPROPERTY()
-	TObjectPtr<class UUIInteractionComponent> InteractionComp;
 	
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UWidgetComponent> LikeUIComp;
 protected:
 	void BillboardLikeUI();
