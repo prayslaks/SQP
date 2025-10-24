@@ -93,8 +93,6 @@ void ATestPlayer::GetRenderTargetFromHit(const FHitResult& Hit, UTextureRenderTa
 	if (const auto BaseMaterialFromCollision = MaterialInterface->GetBaseMaterial(); BaseMaterialFromCollision ==
 		CanvasMaterialBase)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("Detect Paint Material!"));
-
 		//머터리얼 다이나믹 인스턴스로의 형변환에 성공했다면
 		if (const auto MatFromCollision = Cast<UMaterialInstanceDynamic>(MaterialInterface))
 		{

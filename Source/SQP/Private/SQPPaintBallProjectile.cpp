@@ -28,8 +28,6 @@ void ASQPPaintBallProjectile::BeginPlay()
 
 void ASQPPaintBallProjectile::OnOverlapBeginCallback(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, TEXT("PaintBall BeginOverlap!"));
-	
 	if (HasAuthority())
 	{
 		//모든 클라이언트에 채색 시도 명령

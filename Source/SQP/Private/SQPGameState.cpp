@@ -9,11 +9,3 @@
 #include "SQP_PS_Lobby.h"
 
 class ASQP_PS_Lobby;
-
-void ASQPGameState::Multicast_PaintRenderTarget_Implementation(const FVector Start, const FVector End, const uint8 BrushIndex, const float BrushSize)
-{
-	if (const auto Subsystem = GetWorld()->GetSubsystem<USQPPaintWorldSubsystem>())
-	{
-		Subsystem->TryPaint(Start, End, BrushIndex, BrushSize);
-	}
-}

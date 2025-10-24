@@ -46,6 +46,16 @@ struct FPaintExecutionData
 		BrushSize(InBrushSize) { }
 };
 
+//페인트 데이터를 배열로 저장하기 위한 래핑 구조체
+USTRUCT(BlueprintType)
+struct FPaintExecutionDataWrapper
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FPaintExecutionData> PEDArray;
+};
+
 UCLASS()
 class SQP_API UPaintRoomSaveGame : public USaveGame
 {
@@ -53,5 +63,5 @@ class SQP_API UPaintRoomSaveGame : public USaveGame
 
 public:
 	UPROPERTY()
-	TArray<FPaintExecutionData> PaintExecutionDataArray;
+	TMap<FGuid, FPaintExecutionDataWrapper> PEDContainer;
 };
