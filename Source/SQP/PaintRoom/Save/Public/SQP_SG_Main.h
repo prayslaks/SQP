@@ -7,7 +7,7 @@
 #include "SQP_SG_Main.generated.h"
 
 USTRUCT(BlueprintType)
-struct FSQP_PaintRoomSaveGameFormat
+struct FSQP_PainRoomSave
 {
 	GENERATED_BODY()
 
@@ -24,14 +24,14 @@ struct FSQP_PaintRoomSaveGameFormat
 	FString ID;
 
 	//생성자
-	FSQP_PaintRoomSaveGameFormat() {};
-	FSQP_PaintRoomSaveGameFormat(
+	FSQP_PainRoomSave() {};
+	FSQP_PainRoomSave(
 		const FString& InName,
 		const FString& InDate,
 		const FString& InID) :
 		Name(InName),
 		Date(InDate),
-		ID(InID) {};
+		ID(InID) {}
 };
 
 UCLASS()
@@ -42,5 +42,5 @@ class SQP_API USQP_SG_Main : public USaveGame
 public:
 	//페인트 룸의 이름, 날짜, 구체적인 ID가 명시되어 있는 리스트
 	UPROPERTY()
-	TArray<FSQP_PaintRoomSaveGameFormat> PaintRoomSaveGameArray;
+	TArray<FSQP_PainRoomSave> PaintRoomSaveArray;
 };

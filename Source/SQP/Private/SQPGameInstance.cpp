@@ -161,7 +161,7 @@ void USQPGameInstance::SavePaintRoomData(const FGuid PaintRoomSaveGameID, USaveG
 	UGameplayStatics::SaveGameToSlot(PaintRoomSaveGame, IDString, 0);
 
 	//페인트 룸 저장 포맷 구조체 생성
-	FSQP_PaintRoomSaveGameFormat SaveFormat(IDString, FDateTime::Now().ToString(), IDString);
+	FSQP_PainRoomSave SaveFormat(IDString, FDateTime::Now().ToString(), IDString);
 
 	//기존 메인 세이브 게임을 로드하거나 생성하거나
 	USQP_SG_Main* MainSaveGame;
@@ -178,7 +178,7 @@ void USQPGameInstance::SavePaintRoomData(const FGuid PaintRoomSaveGameID, USaveG
 	}
 
 	//페인트 룸의 정보를 배열에 추가
-	MainSaveGame->PaintRoomSaveGameArray.Emplace(SaveFormat);
+	MainSaveGame->PaintRoomSaveArray.Emplace(SaveFormat);
 
 	//메인 세이브 슬롯을 저장
 	UGameplayStatics::SaveGameToSlot(MainSaveGame, MAIN_SAVE, 0);
@@ -188,14 +188,21 @@ void USQPGameInstance::SavePaintRoomData(const FGuid PaintRoomSaveGameID, USaveG
 
 USaveGame* USQPGameInstance::LoadSelectedPaintRoomData() const
 {
-	if (const auto Temp = UGameplayStatics::LoadGameFromSlot(SelectedPaintRoomSaveGameID, 0))
+	if (TargetPaintRoomSaveGameID.Equals(TEXT("")))
 	{
-		PRINTLOG(TEXT("Successfully Save PaintRoomSaveGame ID : %s"), *SelectedPaintRoomSaveGameID);
+		PRINTLOG(TEXT("There is no TargetPaintRoomSaveGameID!"));
+		
+		return nullptr;
+	}
+	
+	if (const auto Temp = UGameplayStatics::LoadGameFromSlot(TargetPaintRoomSaveGameID, 0))
+	{
+		PRINTLOG(TEXT("Successfully Save PaintRoomSaveGame ID : %s"), *TargetPaintRoomSaveGameID);
 		
 		return Temp;
 	}
 
-	PRINTLOG(TEXT("Fail PaintRoomSaveGame ID : %s"), *SelectedPaintRoomSaveGameID);
+	PRINTLOG(TEXT("Fail PaintRoomSaveGame ID : %s"), *TargetPaintRoomSaveGameID);
 	
 	return nullptr;
 }
