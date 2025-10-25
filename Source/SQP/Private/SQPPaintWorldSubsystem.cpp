@@ -127,10 +127,10 @@ void USQPPaintWorldSubsystem::GetRenderTargetFromHit(
 		return;
 	}
 
-	if (!Cast<UMaterialInstanceDynamic>(MaterialInterface))
-	{
-		CanvasMaterialBase = MaterialInterface;
-	}
+	// if (!Cast<UMaterialInstanceDynamic>(MaterialInterface))
+	// {
+	// 	CanvasMaterialBase = MaterialInterface;
+	// }
 	
 	//캔버스 머터리얼과 충돌했다면
 	if (CheckCanvasMaterialBase(MaterialInterface))

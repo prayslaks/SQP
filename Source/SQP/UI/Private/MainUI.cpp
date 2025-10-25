@@ -19,6 +19,7 @@ void UMainUI::NativeConstruct()
 	SetColorGreenBtn->OnClicked.AddDynamic(this, &UMainUI::OnClickGreenBtn);
 	SetColorBlueBtn->OnClicked.AddDynamic(this, &UMainUI::OnClickBlueBtn);
 	SetColorWhiteBtn->OnClicked.AddDynamic(this, &UMainUI::OnClickWhiteBtn);
+	SetColorBlackBtn->OnClicked.AddDynamic(this, &UMainUI::OnClickBlackBtn);
 	BrushSlider->OnValueChanged.AddDynamic(this, &UMainUI::OnBrushSizeChanged);
 }
 
@@ -84,6 +85,13 @@ void UMainUI::OnClickBlueBtn()
 void UMainUI::OnClickWhiteBtn()
 {
 	SetColor(SetColorWhiteBtn->GetBackgroundColor());
+
+	UpdatePlayerState();
+}
+
+void UMainUI::OnClickBlackBtn()
+{
+	SetColor(SetColorBlackBtn->GetBackgroundColor());
 
 	UpdatePlayerState();
 }

@@ -25,6 +25,6 @@ protected:
 	
 public:
 	void CreateMainUI();
-
+	class USlider* GetSliderUI();
 	FLinearColor GetCurrentColor();
 };

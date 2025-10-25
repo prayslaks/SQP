@@ -31,6 +31,8 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<class UUIManager> UIManager;
+	UPROPERTY()
+	TObjectPtr<class USlider> Slider;
 	
 	bool bCursorEnabled = true;
 	UPROPERTY()
@@ -39,6 +41,11 @@ protected:
 	TObjectPtr<class UInputMappingContext> IMC;
 	UPROPERTY()
 	TObjectPtr<class UInputAction> ToggleMouseAction;
+	UPROPERTY()
+	TObjectPtr<class UInputAction> IA_WheelAction;
 	UFUNCTION()
 	void OnToggleMouse(const FInputActionValue& InputActionValue);
+	UFUNCTION()
+	void OffToggleMouse();
+	void OnMouseWheel(const FInputActionValue& InputActionValue);
 };

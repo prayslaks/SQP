@@ -4,11 +4,14 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputMappingContext.h"
 #include "LikeUI.h"
+#include "MainUI.h"
 #include "SQP_PC_PaintRoom.h"
 #include "SQP_PS_PaintRoom.h"
 #include "UIInteractionComponent.h"
 #include "UIManager.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Button.h"
+#include "Components/Slider.h"
 #include "Components/WidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -35,7 +38,13 @@ UMainUIComponent::UMainUIComponent()
 	{
 		ToggleMouseAction = ToggleMouseAsset.Object;
 	}
-
+	ConstructorHelpers::FObjectFinder<UInputAction> WheelAsset(
+				TEXT("'/Game/Splatoon/Input/IA_WheelAction.IA_WheelAction'")
+			);
+	if (WheelAsset.Succeeded())
+	{
+		IA_WheelAction = WheelAsset.Object;
+	}
 	ConstructorHelpers::FObjectFinder<UInputMappingContext> IMCAsset(
 		TEXT("'/Game/Input/IMC_Default.IMC_Default'")
 	);
@@ -43,8 +52,6 @@ UMainUIComponent::UMainUIComponent()
 	{
 		IMC = IMCAsset.Object;
 	}
-
-	SetIsReplicated(true);
 }
 
 
@@ -60,7 +67,15 @@ void UMainUIComponent::OnClick()
 	}
 }
 
-
+void UMainUIComponent::OnMouseWheel(const FInputActionValue& InputActionValue)
+{
+	float WheelAxis = InputActionValue.Get<float>();
+	if (Slider)
+	{
+		float Current = Slider->GetValue();
+		Slider->SetValue(Current + WheelAxis * 30.f);
+	}
+}
 
 void UMainUIComponent::BeginPlay()
 {
@@ -73,7 +88,7 @@ void UMainUIComponent::BeginPlay()
 	LikeUIComp->SetRelativeLocation(FVector(0, 0.f, 0.f));
 
 	UIManager = GetWorld()->GetGameInstance()->GetSubsystem<UUIManager>();
-
+	
 	// Only hide local player's LikeUI
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
 	if (OwnerPawn->IsLocallyControlled())
@@ -81,7 +96,18 @@ void UMainUIComponent::BeginPlay()
 		UIManager->CreateMainUI();
 		LikeUIComp->SetVisibility(false);
 		LikeUIComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
+		
+		TArray<UUserWidget*> FoundWidgets;
+		UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), FoundWidgets, UMainUI::StaticClass());
+		for (UUserWidget* Widget : FoundWidgets)
+		{
+			if (UMainUI* MainUI = Cast<UMainUI>(Widget))
+			{
+				Slider = MainUI->BrushSlider;
+				break;
+			}
+		}
+		
 		PC = Cast<APlayerController>(OwnerPawn->GetController());
 		if (PC)
 		{
@@ -94,6 +120,11 @@ void UMainUIComponent::BeginPlay()
 			{
 				if (ToggleMouseAction)
 					EIC->BindAction(ToggleMouseAction, ETriggerEvent::Started, this, &UMainUIComponent::OnToggleMouse);
+					EIC->BindAction(ToggleMouseAction, ETriggerEvent::Completed, this, &UMainUIComponent::OffToggleMouse);
+				if (IA_WheelAction)
+				{
+					EIC->BindAction(IA_WheelAction, ETriggerEvent::Started, this, &UMainUIComponent::OnMouseWheel);
+				}
 			}
 		}
 	}
@@ -125,7 +156,7 @@ void UMainUIComponent::OnToggleMouse(const FInputActionValue& InputActionValue)
 	{
 		int32 SizeX, SizeY;
 		PC->GetViewportSize(SizeX, SizeY);
-		PC->SetMouseLocation(SizeX / 2, SizeY / 2);
+		PC->SetMouseLocation(SizeX * 80 / 100, SizeY * 27 / 100);
 		PC->bShowMouseCursor = bCursorEnabled;
 
 		FInputModeGameAndUI InputMode;
@@ -138,4 +169,9 @@ void UMainUIComponent::OnToggleMouse(const FInputActionValue& InputActionValue)
 	PC->bShowMouseCursor = bCursorEnabled;
 	PC->SetInputMode(FInputModeGameOnly());
 	bCursorEnabled = true;
+}
+
+void UMainUIComponent::OffToggleMouse()
+{
+	
 }

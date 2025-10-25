@@ -26,9 +26,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UProjectileShooterComponent> ProjectileShooter;
 	UPROPERTY(EditDefaultsOnly)
-	TObjectPtr<class UUIInteractionComponent> InteractionComp;
+	TObjectPtr<class USceneComponent> BoomOffset;
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class USpringArmComponent> InteractionBoom;
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UUIInteractionComponent> InteractionComp;
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class USwimComponent> SwimComp;
 	UPROPERTY()
@@ -38,8 +40,10 @@ protected:
 	TObjectPtr<class UInputMappingContext> IMC;
 	UPROPERTY()
 	TObjectPtr<class UInputAction> FireAction;
+	
 	void StartFire();
 	void CompleteFire();
+	
 
 public:
 	// Called every frame

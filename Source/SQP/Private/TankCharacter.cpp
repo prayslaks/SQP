@@ -52,8 +52,11 @@ ATankCharacter::ATankCharacter()
 	ProjectileShooter = CreateDefaultSubobject<UProjectileShooterComponent>(TEXT("ShooterComp"));
 	ProjectileShooter->SetupAttachment(GetMesh(), FName("TurretBarrel"));
 
+	BoomOffset = CreateDefaultSubobject<USceneComponent>(TEXT("BoomOffset"));
+	BoomOffset->SetupAttachment(FollowCamera);
+
 	InteractionBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("InteractionBoom"));
-	InteractionBoom->SetupAttachment(RootComponent);
+	InteractionBoom->SetupAttachment(BoomOffset);
 
 	InteractionComp = CreateDefaultSubobject<UUIInteractionComponent>(TEXT("InteractionComp"));
 	InteractionComp->SetupAttachment(InteractionBoom);
@@ -80,8 +83,10 @@ void ATankCharacter::BeginPlay()
 			if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PC->InputComponent))
 			{
 				if (FireAction)
+				{
 					EIC->BindAction(FireAction, ETriggerEvent::Started, this, &ATankCharacter::StartFire);
-				EIC->BindAction(FireAction, ETriggerEvent::Completed, this, &ATankCharacter::CompleteFire);
+					EIC->BindAction(FireAction, ETriggerEvent::Completed, this, &ATankCharacter::CompleteFire);
+				}
 			}
 		}
 	}
@@ -91,11 +96,6 @@ void ATankCharacter::BeginPlay()
 void ATankCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if (InteractionComp && FollowCamera)
-	{
-		InteractionComp->SetRelativeLocation(FollowCamera->GetComponentLocation());
-		InteractionComp->SetRelativeRotation(FollowCamera->GetComponentRotation());
-	}
 }
 
 // Called to bind functionality to input
@@ -113,3 +113,5 @@ void ATankCharacter::CompleteFire()
 {
 	ProjectileShooter->ReleaseTrigger();
 }
+
+

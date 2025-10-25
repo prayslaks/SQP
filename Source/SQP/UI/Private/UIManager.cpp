@@ -30,6 +30,11 @@ void UUIManager::CreateMainUI()
 	MainUI->SetIsFocusable(false);
 }
 
+USlider* UUIManager::GetSliderUI()
+{
+	return MainUI->BrushSlider.Get();
+}
+
 FLinearColor UUIManager::GetCurrentColor()
 {
 	if (!MainUI)
