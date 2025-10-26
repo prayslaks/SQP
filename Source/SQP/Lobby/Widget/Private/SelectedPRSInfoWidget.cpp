@@ -4,7 +4,7 @@
 
 #include "Components/TextBlock.h"
 
-void USelectedPRSInfoWidget::UpdatePRSInfo(const FSQP_PainRoomSave& PainRoomSave) const
+void USelectedPRSInfoWidget::UpdatePRSInfo(const FSQP_PainRoomSaveFormat& PainRoomSave) const
 {
 	SaveNameTextBlock->SetText(FText::FromString(PainRoomSave.Name));
 	SaveIDTextBlock->SetText(FText::FromString(PainRoomSave.ID));

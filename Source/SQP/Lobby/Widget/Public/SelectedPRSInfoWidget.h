@@ -26,5 +26,5 @@ protected:
 
 public:
 	UFUNCTION()
-	void UpdatePRSInfo(const FSQP_PainRoomSave& PainRoomSave) const;
+	void UpdatePRSInfo(const FSQP_PainRoomSaveFormat& PainRoomSave) const;
 };

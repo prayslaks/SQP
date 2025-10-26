@@ -47,5 +47,5 @@ public:
 	TObjectPtr<UImage> BackgroundImage;
 
 	UPROPERTY()
-	FSQP_PainRoomSave BindingPRS;
+	FSQP_PainRoomSaveFormat BindingPRS;
 };

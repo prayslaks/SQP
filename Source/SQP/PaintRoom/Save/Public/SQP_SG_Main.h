@@ -7,7 +7,7 @@
 #include "SQP_SG_Main.generated.h"
 
 USTRUCT(BlueprintType)
-struct FSQP_PainRoomSave
+struct FSQP_PainRoomSaveFormat
 {
 	GENERATED_BODY()
 
@@ -23,15 +23,21 @@ struct FSQP_PainRoomSave
 	UPROPERTY()
 	FString ID;
 
+	//이 세이브 게임과 바인딩되어 있는 페인트 룸의 레벨 이름
+	UPROPERTY()
+	FString Level;
+
 	//생성자
-	FSQP_PainRoomSave() {};
-	FSQP_PainRoomSave(
+	FSQP_PainRoomSaveFormat() {};
+	FSQP_PainRoomSaveFormat(
 		const FString& InName,
 		const FString& InDate,
-		const FString& InID) :
+		const FString& InID,
+		const FString& InLevel) :
 		Name(InName),
 		Date(InDate),
-		ID(InID) {}
+		ID(InID),
+		Level(InLevel) {}
 };
 
 UCLASS()
@@ -42,5 +48,5 @@ class SQP_API USQP_SG_Main : public USaveGame
 public:
 	//페인트 룸의 이름, 날짜, 구체적인 ID가 명시되어 있는 리스트
 	UPROPERTY()
-	TArray<FSQP_PainRoomSave> PaintRoomSaveArray;
+	TArray<FSQP_PainRoomSaveFormat> PaintRoomSaveArray;
 };

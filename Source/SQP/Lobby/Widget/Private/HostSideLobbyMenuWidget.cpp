@@ -12,6 +12,7 @@
 #include "Components/ScrollBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
+#include "Components/VerticalBoxSlot.h"
 
 UHostSideLobbyMenuWidget::UHostSideLobbyMenuWidget()
 {
@@ -84,7 +85,7 @@ void UHostSideLobbyMenuWidget::OnOtherPlayerEnter(FPlayerInfo& NewPlayerInfo)
 void UHostSideLobbyMenuWidget::OnCancelSaveDataSelectionButtonClicked()
 {
 	//게임 인스턴스에 지정된 페인트 룸 세이브 ID를 초기화한다
-	Cast<USQPGameInstance>(GetWorld()->GetGameInstance())->SetTargetPaintRoomSaveGameID(TEXT(""));
+	Cast<USQPGameInstance>(GetWorld()->GetGameInstance())->SetTargetPaintRoomSave(FSQP_PainRoomSaveFormat());
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst
@@ -97,7 +98,7 @@ void UHostSideLobbyMenuWidget::OnSaveDataSlotDoubleClicked(UPaintRoomSaveInfoWid
 	}
 	
 	//게임 인스턴스에 지정된 페인트 룸 세이브 ID를 재설정한다
-	Cast<USQPGameInstance>(GetWorld()->GetGameInstance())->SetTargetPaintRoomSaveGameID(Target->BindingPRS.ID);
+	Cast<USQPGameInstance>(GetWorld()->GetGameInstance())->SetTargetPaintRoomSave(Target->BindingPRS);
 
 	//이전에 선택된 위젯이 있었다면
 	if (CurrentSelectedPaintRoomSaveInfoWidget)

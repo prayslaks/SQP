@@ -151,17 +151,18 @@ USaveGame* USQPGameInstance::LoadMainSaveGame()
 	return nullptr;
 }
 
-void USQPGameInstance::SavePaintRoomData(const FGuid PaintRoomSaveGameID, USaveGame* PaintRoomSaveGame)
+void USQPGameInstance::SavePaintRoomData(const FString& PaintRoomSaveName, const FGuid PaintRoomSaveGameID, USaveGame* PaintRoomSaveGame)
 {
 	//ID를 문자열로 전환한다
 	const FString Date = FDateTime::Now().ToString();
 	const FString IDString = PaintRoomSaveGameID.ToString(EGuidFormats::DigitsWithHyphens) + Date;
+	const FString Level = UGameplayStatics::GetCurrentLevelName(GetWorld());
 	
 	//전달받은 게임 세이브를 전달받은 ID를 이용하여 슬롯에 저장
 	UGameplayStatics::SaveGameToSlot(PaintRoomSaveGame, IDString, 0);
 
 	//페인트 룸 저장 포맷 구조체 생성
-	FSQP_PainRoomSave SaveFormat(IDString, FDateTime::Now().ToString(), IDString);
+	FSQP_PainRoomSaveFormat SaveFormat(PaintRoomSaveName, FDateTime::Now().ToString(), IDString, Level);
 
 	//기존 메인 세이브 게임을 로드하거나 생성하거나
 	USQP_SG_Main* MainSaveGame;
@@ -188,21 +189,26 @@ void USQPGameInstance::SavePaintRoomData(const FGuid PaintRoomSaveGameID, USaveG
 
 USaveGame* USQPGameInstance::LoadSelectedPaintRoomData() const
 {
-	if (TargetPaintRoomSaveGameID.Equals(TEXT("")))
+	if (TargetPaintRoomSave.Level.Equals(TEXT("")))
 	{
-		PRINTLOG(TEXT("There is no TargetPaintRoomSaveGameID!"));
-		
+		PRINTLOG(TEXT("Invalid Level!"));
 		return nullptr;
 	}
 	
-	if (const auto Temp = UGameplayStatics::LoadGameFromSlot(TargetPaintRoomSaveGameID, 0))
+	if (TargetPaintRoomSave.ID.Equals(TEXT("")))
 	{
-		PRINTLOG(TEXT("Successfully Save PaintRoomSaveGame ID : %s"), *TargetPaintRoomSaveGameID);
+		PRINTLOG(TEXT("Invalid ID!"));
+		return nullptr;
+	}
+	
+	if (const auto Temp = UGameplayStatics::LoadGameFromSlot(TargetPaintRoomSave.ID, 0))
+	{
+		PRINTLOG(TEXT("Successfully Save PaintRoomSaveGame ID : %s"), *TargetPaintRoomSave.ID);
 		
 		return Temp;
 	}
 
-	PRINTLOG(TEXT("Fail PaintRoomSaveGame ID : %s"), *TargetPaintRoomSaveGameID);
+	PRINTLOG(TEXT("Fail PaintRoomSaveGame ID : %s"), *TargetPaintRoomSave.ID);
 	
 	return nullptr;
 }
@@ -240,4 +246,4 @@ void USQPGameInstance::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, EN
 
 	//결정된 맵으로 클라이언트와 함께 이동
 	GetWorld()->ServerTravel(TargetMapPath, true);
-}
+} 
