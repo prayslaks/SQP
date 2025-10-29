@@ -7,6 +7,7 @@
 #include "UIManager.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "PaintGaming/Public/ReadyActor.h"
 
 ASQPPaintBallProjectile::ASQPPaintBallProjectile()
 {
@@ -45,6 +46,12 @@ void ASQPPaintBallProjectile::OnOverlapBeginCallback(
 
 		//비활성화
 		InactivateProjectile();
+
+		if (AReadyActor* ReadyActor = Cast<AReadyActor>(OtherActor))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("ReadyActor Casted"))
+			Server_AddReady(ReadyActor);
+		}
 	}
 }
 
@@ -52,6 +59,22 @@ void ASQPPaintBallProjectile::SetPaintColor(const FLinearColor& Value)
 {
 	PaintColor = Value;
 	Multicast_ColorPaintBall(Value);
+}
+
+void ASQPPaintBallProjectile::Server_AddReady_Implementation(AReadyActor* ReadyActor)
+{
+	if (ReadyActor->ReadyPlayerState.Contains(OwnerPlayerState) == false)
+	{
+		ReadyActor->ReadyPlayerState.Add(OwnerPlayerState);
+	}
+	// for (int32 i = 0; i < ReadyActor->ReadyPlayerState.Num(); i++)
+	// {
+	// 	if (ReadyActor->ReadyPlayerState[i])
+	// 	{
+	// 		UE_LOG(LogTemp, Warning, TEXT("[%d] PlayerState = %s"), 
+	// 			i, *ReadyActor->ReadyPlayerState[i]->GetName());
+	// 	}
+	// }
 }
 
 void ASQPPaintBallProjectile::Multicast_ColorPaintBall_Implementation(const FLinearColor Color)
@@ -62,7 +85,8 @@ void ASQPPaintBallProjectile::Multicast_ColorPaintBall_Implementation(const FLin
 	}
 }
 
-void ASQPPaintBallProjectile::Multicast_TryPaint_Implementation(const FLinearColor BrushColor, const float BrushSizeValue)
+void ASQPPaintBallProjectile::Multicast_TryPaint_Implementation(const FLinearColor BrushColor,
+                                                                const float BrushSizeValue)
 {
 	const FVector Offset = GetActorForwardVector() * 200;
 	const FVector Start = GetActorLocation() - Offset;

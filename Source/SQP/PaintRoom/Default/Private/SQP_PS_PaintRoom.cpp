@@ -2,9 +2,8 @@
 
 #include "SQP_PS_PaintRoom.h"
 #include "LikeUI.h"
+#include "MainUI.h"
 #include "MainUIComponent.h"
-#include "SQP.h"
-#include "TankCharacter.h"
 #include "Components/RichTextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -13,7 +12,6 @@
 void ASQP_PS_PaintRoom::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 void ASQP_PS_PaintRoom::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -36,7 +34,11 @@ void ASQP_PS_PaintRoom::OnRep_LikeCounter()
 	if (UMainUIComponent* MainUIComp = GetPawn()->FindComponentByClass<UMainUIComponent>())
 	{
 		//PRINTLOGNET(TEXT("%s"), *GetPawn()->GetActorNameOrLabel());
-		
+		if (GetPawn()->IsLocallyControlled())
+		{
+			MainUIComp->MainUI->WBP_LikeUI->LikeNumberText->SetText(FText::FromString(RichText));
+		}
+
 		if (ULikeUI* LikeUI = Cast<ULikeUI>(MainUIComp->LikeUIComp->GetWidget()))
 		{
 			LikeUI->LikeNumberText->SetText(FText::FromString(RichText));
