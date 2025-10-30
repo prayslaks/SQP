@@ -2,14 +2,20 @@
 
 #include "SQP_PS_PaintRoomComponent.h"
 
+#include "CatchMindWidget.h"
 #include "LikeUI.h"
 #include "MainUIComponent.h"
+#include "SQP.h"
+#include "SQP_PC_PaintRoom.h"
 #include "SQP_PS_Master.h"
 #include "Components/RichTextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 
-class ULikeUI;
+USQP_PS_PaintRoomComponent::USQP_PS_PaintRoomComponent() : bCanFirePaintBall(true)
+{
+	
+}
 
 void USQP_PS_PaintRoomComponent::BeginPlay()
 {
@@ -22,6 +28,14 @@ void USQP_PS_PaintRoomComponent::GetLifetimeReplicatedProps(TArray<class FLifeti
 
 	//프로퍼티 리플리케이션 활성화
 	DOREPLIFETIME(USQP_PS_PaintRoomComponent, LikeCounter);
+	DOREPLIFETIME(USQP_PS_PaintRoomComponent, PaintRoomRole);
+	DOREPLIFETIME(USQP_PS_PaintRoomComponent, bCanFirePaintBall);
+}
+
+void USQP_PS_PaintRoomComponent::OnRep_bCanFirePaintBall()
+{
+	//MUST플레이어가 페인트 볼 발사 가능 여부를 알 수 있도록 UI 업데이트
+	PRINTLOGNET(TEXT("CanFirePaintBall : %s!"), bCanFirePaintBall ? TEXT("True") : TEXT("False"));
 }
 
 void USQP_PS_PaintRoomComponent::IncreaseLikeCounter()
@@ -43,5 +57,36 @@ void USQP_PS_PaintRoomComponent::OnRep_LikeCounter() const
 		{
 			LikeUI->LikeNumberText->SetText(FText::FromString(RichText));
 		}
+	}
+}
+
+void USQP_PS_PaintRoomComponent::OnRep_PaintRoomRole()
+{
+	if (const ASQP_PC_PaintRoom* PCPaint = Cast<ASQP_PC_PaintRoom>(GetBindingPSMaster()->GetPlayerController()); PCPaint == GetWorld()->GetFirstPlayerController())
+	{
+		//역할에 따라서 UI 등이 업데이트 된다
+		switch (PAINT_ROOM_ROLE)
+		{
+		case EPaintRoomRole::None:
+			{
+				PCPaint->CatchMindWidget->HideAll();
+				break;
+			}
+		case EPaintRoomRole::CatchMindPainter:
+			{
+				PCPaint->CatchMindWidget->ShowPainter();
+				break;
+			}
+		case EPaintRoomRole::CatchMindParticipant:
+			{
+				PCPaint->CatchMindWidget->ShowParticipant();
+				break;
+			}
+		default:
+			{
+				PCPaint->CatchMindWidget->HideAll();
+				break;
+			}
+		}	
 	}
 }

@@ -6,6 +6,7 @@
 #include "SQPPlayerController.h"
 #include "SQP_PC_PaintRoom.generated.h"
 
+class UCatchMindWidget;
 class ASQP_PS_Master;
 
 UCLASS()
@@ -14,6 +15,8 @@ class SQP_API ASQP_PC_PaintRoom : public ASQPPlayerController
 	GENERATED_BODY()
 
 protected:
+	ASQP_PC_PaintRoom();
+	
 	virtual void BeginPlay() override;
 
 	UPROPERTY()
@@ -51,4 +54,16 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void Server_CountLike(ASQP_PS_Master* TargetPS);
+
+	//서버가 캐치마인드 제시어를 보내주는 Client RPC
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveCatchMindSuggestion(const FString& Suggestion);
+
+	//캐치 마인드 위젯 블루프린트 클래스
+	UPROPERTY(VisibleAnywhere)
+	TSubclassOf<UUserWidget> CatchMindWidgetClass;
+
+	//캐치 마인드 위젯
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCatchMindWidget> CatchMindWidget;
 };

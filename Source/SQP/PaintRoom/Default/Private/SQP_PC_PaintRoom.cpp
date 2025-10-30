@@ -3,10 +3,25 @@
 
 #include "PaintRoom/Default/Public/SQP_PC_PaintRoom.h"
 
+#include "CatchMindWidget.h"
 #include "SkyViewPawn.h"
+#include "SQP.h"
 #include "SQP_PS_Master.h"
 #include "SQP_PS_PaintRoomComponent.h"
 #include "TankCharacter.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/TextBlock.h"
+
+ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
+{
+	//캐치 마인드 위젯 블루프린트 클래스 획득
+	if (static ConstructorHelpers::FClassFinder<UUserWidget>
+		Finder(TEXT("/Game/Splatoon/Blueprint/PaintRoomLevel/WBP_CatchMind.WBP_CatchMind_C"));
+		Finder.Succeeded())
+	{
+		CatchMindWidgetClass = Finder.Class;
+	}
+}
 
 void ASQP_PC_PaintRoom::Server_PaintColorChange_Implementation(const FLinearColor Value)
 {
@@ -31,6 +46,20 @@ void ASQP_PC_PaintRoom::BeginPlay()
 	if (HasAuthority())
 	{
 		SpawnSkyViewPawn();
+	}
+
+	if (IsLocalController())
+	{
+		//캐치 마인드 위젯 블루프린트 생성
+		if (const auto Created = CreateWidget(this, CatchMindWidgetClass))
+		{
+			if (const auto Casted = Cast<UCatchMindWidget>(Created))
+			{
+				CatchMindWidget = Casted;
+				CatchMindWidget->HideAll();
+				CatchMindWidget->AddToViewport();
+			}
+		}	
 	}
 }
 
@@ -97,6 +126,11 @@ void ASQP_PC_PaintRoom::SpawnSkyViewPawn()
 void ASQP_PC_PaintRoom::OnSkyView()
 {
 	Server_PossessSkyView();
+}
+
+void ASQP_PC_PaintRoom::Client_ReceiveCatchMindSuggestion_Implementation(const FString& Suggestion)
+{
+	CatchMindWidget->SetSuggestionText(Suggestion);
 }
 
 void ASQP_PC_PaintRoom::Server_CountLike_Implementation(ASQP_PS_Master* TargetPS)

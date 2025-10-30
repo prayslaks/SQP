@@ -32,6 +32,10 @@ public:
 	//매 틱마다 트리거 및 사격 상태를 확인하고 발사체를 생성-발사
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	//페인트 볼을 발사한다
+	UFUNCTION(BlueprintCallable)
+	void FirePaintBall();
+	
 	//외부에서 호출해 발사 신호를 주는 메서드
 	UFUNCTION(BlueprintCallable)
 	void PullTrigger();
@@ -40,9 +44,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ReleaseTrigger();
 
+	//유저의 발사 입력 개시 신호를 전달하는 Server RPC
 	UFUNCTION(Server, Reliable)
 	void Server_StartShoot();
 
+	//유자의 발사 입력 중단 신호를 전달하는 Server RPC
 	UFUNCTION(Server, Reliable)
 	void Server_StopShoot();
 

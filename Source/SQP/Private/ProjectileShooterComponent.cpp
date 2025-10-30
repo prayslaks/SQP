@@ -33,56 +33,72 @@ void UProjectileShooterComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
 	//서버 측의 오소리티 캐릭터일 때만
-	if (OwnerCharacter && OwnerCharacter->HasAuthority())
+	if (OwnerCharacter == nullptr || OwnerCharacter->HasAuthority() == false)
 	{
-		//트리거가 활성화되어 있다면
-		if (bIsOnTrigger)
+		return;
+	}
+
+	//사격이 가능한 상태일 때만
+	if (OwnerCharacter->GetPlayerState<ASQP_PS_Master>()->PaintRoom->CAN_FIRE_PAINT_BALL == false)
+	{
+		return;
+	}
+
+	//트리거가 활성화되어 있을 때만
+	if (bIsOnTrigger == false)
+	{
+		return;
+	}
+
+	//버스트 리미터보다 적게 발사했다면
+	if (BurstLimiter == -1 || ShootCounter < BurstLimiter)
+	{
+		//시간이 지나가고
+		ElapsedTimeAfterLastShoot += DeltaTime;
+
+		//발사 시간이 지나가면
+		if (ElapsedTimeAfterLastShoot > ShootRate)
 		{
-			//버스트 리미터보다 적게 발사했다면
-			if (BurstLimiter == -1 || ShootCounter < BurstLimiter)
-			{
-				//시간이 지나가고
-				ElapsedTimeAfterLastShoot += DeltaTime;
-
-				//발사 시간이 지나가면
-				if (ElapsedTimeAfterLastShoot > ShootRate)
-				{
-					//발사 카운터를 증가시키고
-					ShootCounter++;
+			//발사 카운터를 증가시키고
+			ShootCounter++;
 			
-					//발사 시간을 차감하고
-					ElapsedTimeAfterLastShoot -= ShootRate;
+			//발사 시간을 차감하고
+			ElapsedTimeAfterLastShoot -= ShootRate;
 
-					//발사체를 발사한다
-					if (const auto Subsystem = GetWorld()->GetSubsystem<UProjectilePoolWorldSubsystem>())
-					{
-						//발사체 풀링
-						const auto Projectile = Subsystem->PopProjectile(ProjectileClass, GetComponentTransform(), 2000);
+			//페인트 볼을 발사한다
+			FirePaintBall();
+		}
+	}
+}
 
-						//소유자 설정
-						Projectile->SetOwner(GetOwner());
+void UProjectileShooterComponent::FirePaintBall()
+{
+	//발사체를 발사한다
+	if (const auto Subsystem = GetWorld()->GetSubsystem<UProjectilePoolWorldSubsystem>())
+	{
+		//발사체 풀링
+		const auto Projectile = Subsystem->PopProjectile(ProjectileClass, GetComponentTransform(), 2000);
 
-						//페인트 볼에 색상 설정
-						if (const auto PaintBall = Cast<ASQPPaintBallProjectile>(Projectile))
-						{
-							if (const auto Player = Cast<ACharacter>(GetOwner()))
-							{
-								if (const auto PlayerState = Player->GetPlayerState<ASQP_PS_Master>())
-								{
-									PaintBall->SetPaintBallOwner(PlayerState);
-									PaintBall->SetPaintColor(PlayerState->PaintRoom->SelectedColor);
-									PaintBall->SetBrushSize(PlayerState->PaintRoom->SelectedBrushSize);
-								}
-							}
-						}
-						
-						// 풀링되지 않은 일반 스폰
-						// const auto Temp = GetWorld()->SpawnActor<AProjectileBase>(ProjectileClass, GetComponentTransform());
-						// Temp->ActiveProjectile(GetComponentTransform(), 2000);
-					}
+		//소유자 설정
+		Projectile->SetOwner(GetOwner());
+
+		//페인트 볼에 색상 설정
+		if (const auto PaintBall = Cast<ASQPPaintBallProjectile>(Projectile))
+		{
+			if (const auto Player = Cast<ACharacter>(GetOwner()))
+			{
+				if (const auto PlayerState = Player->GetPlayerState<ASQP_PS_Master>())
+				{
+					PaintBall->SetPaintBallOwner(PlayerState);
+					PaintBall->SetPaintColor(PlayerState->PaintRoom->SelectedColor);
+					PaintBall->SetBrushSize(PlayerState->PaintRoom->SelectedBrushSize);
 				}
 			}
-		}	
+		}
+						
+		// 풀링되지 않은 일반 스폰
+		// const auto Temp = GetWorld()->SpawnActor<AProjectileBase>(ProjectileClass, GetComponentTransform());
+		// Temp->ActiveProjectile(GetComponentTransform(), 2000);
 	}
 }
 

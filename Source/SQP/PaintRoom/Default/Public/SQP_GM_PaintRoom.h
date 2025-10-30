@@ -16,6 +16,22 @@ public:
 	
 	virtual void BeginPlay() override;
 
+	//페인트 룸에서 사용하는 위젯 블루프린트 클래스
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> PaintRoomWidgetClass;
+
+	//제시어로 사용할 수 있는 단어를 저장한 문자열 배열
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FString> SuggestionArray;
+
+	//캐치 마인드 미니 게임을 시작하는 메서드
+	UFUNCTION(BlueprintCallable)
+	void StartCatchMindMiniGame();
+
+	//캐치 마인드 미니 게임을 종료하는 메서드
+	UFUNCTION()
+	void EndCatchMindMiniGame();
+
+	//캐치 마인드 미니 게임을 종료하는 타이머
+	FTimerHandle CatchMindMiniGameTimerHandle;
 };

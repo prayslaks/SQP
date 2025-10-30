@@ -19,6 +19,7 @@ void ASQP_GS_PaintRoom::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	//리플리케이션 등록
 	DOREPLIFETIME(ASQP_GS_PaintRoom, PaintExecutionDataSnapshot);
+	DOREPLIFETIME(ASQP_GS_PaintRoom, PaintRoomState);
 }
 
 void ASQP_GS_PaintRoom::OnRep_PaintExecutionDataSnapshot()
@@ -50,6 +51,11 @@ void ASQP_GS_PaintRoom::OnRep_PaintExecutionDataSnapshot()
 	{
 		Subsystem->LoadPaintOfWorld(PEDContainer);
 	}
+}
+
+void ASQP_GS_PaintRoom::OnRep_PaintRoomState()
+{
+	//서버에서 캐치마인드가 시작되었으므로 관련 UI를 업데이트 한다
 }
 
 void ASQP_GS_PaintRoom::Multicast_SetRandomImage_Implementation(UTexture2D* Image)

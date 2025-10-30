@@ -32,11 +32,11 @@ void ASQP_PS_Master::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	if (GetLocalRole() == ROLE_Authority)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[SERVER] PlayerState::EndPlay가 호출됨!"));
+		PRINTLOGNET(TEXT("PS_Master::EndPlay()"));
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[CLIENT] PlayerState::EndPlay가 호출됨!"));
+		PRINTLOGNET(TEXT("PS_Master::EndPlay()"));
 	}
 }
 
