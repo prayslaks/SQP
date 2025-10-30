@@ -6,6 +6,13 @@
 #include "GameFramework/Actor.h"
 #include "CompareActor.generated.h"
 
+UENUM(BlueprintType)
+enum class EPaintGamePlayer : uint8
+{
+	PlayerA,
+	PlayerB
+};
+
 UCLASS()
 class SQP_API ACompareActor : public AActor
 {
@@ -14,21 +21,31 @@ class SQP_API ACompareActor : public AActor
 public:
 	// Sets default values for this actor's properties
 	ACompareActor();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="PaintGamePlayer")
+	EPaintGamePlayer PaintGamePlayer = EPaintGamePlayer::PlayerA;
 
-	UPROPERTY(EditAnywhere)
-	UTexture2D* Original;
+	
 
-	UPROPERTY(EditAnywhere)
-	UTexture2D* CompareA;
-
-	UPROPERTY(EditAnywhere)
-	UTexture2D* CompareB;
+	UPROPERTY()
+	TObjectPtr<class UAISimilarityClient> Client;
+	UPROPERTY()
+	TObjectPtr<class ASQP_GS_PaintRoom> GS;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void FinishGame();
+
+	UPROPERTY()
+	TObjectPtr<class UMaterialInstanceDynamic> DynMat;
+	
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void SetCompareImage(UTexture2D* Image);
+
+	void EvaluateWinner();
 };

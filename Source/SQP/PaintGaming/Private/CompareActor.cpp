@@ -3,6 +3,8 @@
 
 #include "CompareActor.h"
 #include "AISimilarityClient.h"
+#include "PaintGameActor.h"
+#include "SQP_GS_PaintRoom.h"
 #include "Engine/Texture2D.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -11,27 +13,40 @@ ACompareActor::ACompareActor()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	if (Tags.Contains("0"))
+	{
+		Tags.Add(FName("1"));
+	}
+	Tags.Add(FName("0"));
 }
+
+
 
 // Called when the game starts or when spawned
 void ACompareActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (!Original || !CompareA || !CompareB)
+	APaintGameActor* PaintGameActor = Cast<APaintGameActor>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), APaintGameActor::StaticClass()));
+
+	PaintGameActor->OnTimerFinished.BindUObject(this, &ACompareActor::FinishGame);
+
+	if (PaintGamePlayer == EPaintGamePlayer::PlayerA)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Texture references missing! Assign in Editor"));
-		return;
+		Tags.AddUnique("PlayerA");
+	}
+	else if (PaintGamePlayer == EPaintGamePlayer::PlayerB)
+	{
+		Tags.AddUnique("PlayerB");
 	}
 
-	auto* Client = GetGameInstance()->GetSubsystem<UAISimilarityClient>();
-	Client->SendCompareRequest(Original, CompareA, CompareB,
-		FAIResultDelegate::CreateLambda([](const FString& Winner)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("AI 선택 결과: %s"), *Winner);
-		})
-	);
-	
+	Client = GetGameInstance()->GetSubsystem<UAISimilarityClient>();
+
+	GS = Cast<ASQP_GS_PaintRoom>(UGameplayStatics::GetGameState(GetWorld()));
+
+	DynMat = FindComponentByClass<UStaticMeshComponent>()->CreateAndSetMaterialInstanceDynamic(0);
 }
 
 // Called every frame
@@ -40,3 +55,33 @@ void ACompareActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+void ACompareActor::SetCompareImage(UTexture2D* Image)
+{
+	if (Tags.Contains("PlayerA"))
+	{
+		GS->Multicast_SetCompareAImage(Image);
+	}
+	else if (Tags.Contains("PlayerB"))
+	{
+		GS->Multicast_SetCompareBImage(Image);
+	}
+}
+
+void ACompareActor::EvaluateWinner()
+{
+	Client->SendCompareRequest(GS->RandomImage, GS->CompareAImage, GS->CompareBImage,
+							   FAIResultDelegate::CreateLambda([](const FString& Winner)
+							   {
+								   UE_LOG(LogTemp, Warning, TEXT("AI 선택 결과: %s"), *Winner);
+							   })
+	);
+}
+
+void ACompareActor::FinishGame()
+{
+	UTexture* ColorTexture;
+	DynMat->GetTextureParameterValue(FName("ColorRenderTarget"), ColorTexture);
+	UTexture2D* Texture2D = Cast<UTexture2D>(ColorTexture);
+	SetCompareImage(Texture2D);
+	EvaluateWinner();
+}

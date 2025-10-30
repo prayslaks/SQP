@@ -47,10 +47,11 @@ async def compare_images(original: UploadFile, A: UploadFile, B: UploadFile):
         "scoreB": scoreB
     })
 
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
-
 # ✅ 헬스 체크용 기본 엔드포인트 추가
 @app.get("/")
 def root():
     return {"message": "AI Server is running!"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)
+

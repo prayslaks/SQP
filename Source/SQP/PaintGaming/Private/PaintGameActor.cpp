@@ -7,6 +7,7 @@
 #include "MainUI.h"
 #include "MainUIComponent.h"
 #include "ReadyActor.h"
+#include "SQP_GS_PaintRoom.h"
 #include "TankCharacter.h"
 #include "Components/RichTextBlock.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,6 +19,8 @@ APaintGameActor::APaintGameActor()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -32,22 +35,19 @@ void APaintGameActor::BeginPlay()
 
 	IMGManager = GetGameInstance()->GetSubsystem<UIMGManager>();
 	if (!IMGManager) return;
-
 	
 	DynMat = FindComponentByClass<UStaticMeshComponent>()->CreateAndSetMaterialInstanceDynamic(0);
+
+	GS = Cast<ASQP_GS_PaintRoom>(UGameplayStatics::GetGameState(GetWorld()));
 }
 
-void APaintGameActor::Multicast_ShowRandomImage_Implementation(UTexture2D* Image)
+
+void APaintGameActor::ShowRandomImage(UTexture2D* Image)
 {
 	if (DynMat)
 	{
 		DynMat->SetTextureParameterValue(TEXT("ReferenceImage"), Image);
 	}
-}
-
-void APaintGameActor::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 }
 
 // Called every frame
@@ -58,12 +58,15 @@ void APaintGameActor::Tick(float DeltaTime)
 
 void APaintGameActor::StartGameTimer()
 {
-	StartTime = 30;
+	StartTime = 10;
+
 	if (HasAuthority())
 	{
-		Multicast_ShowRandomImage(IMGManager->GetRandomImage());
+		GS->Multicast_SetRandomImage(IMGManager->GetRandomImage());
 	}
 
+	ShowRandomImage(GS->RandomImage);
+	
 	GetWorld()->GetTimerManager().SetTimer(
 		StartTimer,
 		this,
@@ -103,12 +106,5 @@ void APaintGameActor::CountDownText()
 
 void APaintGameActor::StartGameTimerFinished()
 {
-	if (HasAuthority())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[SERVER] : Finish"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[CLIENT] : Finish"));
-	}
+	OnTimerFinished.Execute();
 }

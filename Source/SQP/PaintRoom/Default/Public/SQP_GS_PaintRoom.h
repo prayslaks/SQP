@@ -25,4 +25,19 @@ public:
 	void OnRep_PaintExecutionDataSnapshot();
 
 	bool bHasInitialPaintDataBeenApplied = false;
+
+	UPROPERTY()
+	TObjectPtr<UTexture2D> RandomImage;
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetRandomImage(UTexture2D* Image);
+
+	UPROPERTY()
+	TObjectPtr<class UTexture2D> CompareAImage;
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetCompareAImage(UTexture2D* Image);
+
+	UPROPERTY()
+	TObjectPtr<class UTexture2D> CompareBImage;
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetCompareBImage(UTexture2D* Image);
 };

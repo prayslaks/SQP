@@ -29,7 +29,7 @@ public:
 	UPROPERTY(Replicated)
 	TArray<TObjectPtr<class ASQP_PS_Master>> ReadyPlayerState;
 	
-	bool bReady = false;
+	bool bIsReady = false;
 	void StartReadyTimer();
 	void CountDown();
 	void CountDownText();

@@ -45,12 +45,12 @@ void AReadyActor::Tick(float DeltaTime)
 		// ClearRenderTarget2D
 		// TODO: 추후 bReady, visibility, ReadyPlayerState 초기화
 
-		if (bReady)
+		if (bIsReady)
 			return;
 
-		bReady = true;
+		bIsReady = true;
 
-		if (bReady)
+		if (bIsReady)
 		{
 			StartReadyTimer();
 		}

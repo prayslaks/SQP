@@ -58,18 +58,10 @@ void ASQPPaintBallProjectile::SetPaintColor(const FLinearColor& Value)
 
 void ASQPPaintBallProjectile::Server_AddReady_Implementation(AReadyActor* ReadyActor)
 {
-	if (ReadyActor->ReadyPlayerState.Contains(OwnerPlayerState) == false)
+	if (ReadyActor->ReadyPlayerState.Contains(OwnerPlayerState) == false && ReadyActor->bIsReady == false)
 	{
 		ReadyActor->ReadyPlayerState.Add(OwnerPlayerState);
 	}
-	// for (int32 i = 0; i < ReadyActor->ReadyPlayerState.Num(); i++)
-	// {
-	// 	if (ReadyActor->ReadyPlayerState[i])
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("[%d] PlayerState = %s"), 
-	// 			i, *ReadyActor->ReadyPlayerState[i]->GetName());
-	// 	}
-	// }
 }
 
 void ASQPPaintBallProjectile::Multicast_ColorPaintBall_Implementation(const FLinearColor Color)

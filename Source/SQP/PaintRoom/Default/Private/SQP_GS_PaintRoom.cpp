@@ -51,3 +51,18 @@ void ASQP_GS_PaintRoom::OnRep_PaintExecutionDataSnapshot()
 		Subsystem->LoadPaintOfWorld(PEDContainer);
 	}
 }
+
+void ASQP_GS_PaintRoom::Multicast_SetRandomImage_Implementation(UTexture2D* Image)
+{
+	RandomImage = Image;
+}
+
+void ASQP_GS_PaintRoom::Multicast_SetCompareAImage_Implementation(UTexture2D* Image)
+{
+	CompareAImage = Image;
+}
+
+void ASQP_GS_PaintRoom::Multicast_SetCompareBImage_Implementation(UTexture2D* Image)
+{
+	CompareBImage = Image;
+}
