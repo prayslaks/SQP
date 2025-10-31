@@ -150,7 +150,7 @@ void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 		const int32 Size = TempPSMasterArray.Num();
 		
 		//이번에 그림을 제시어를 묘사할 캐치마인드 플레이어를 선택
-		const int PainterIdx = FMath::RandRange(0, Size - 1);
+		const int PainterIdx = FMath::RandRange(1, Size - 1);
 
 		//모든 유저의 페인트 룸 역할을 갱신
 		for (int i = 0; i < Size; i++)
@@ -188,13 +188,17 @@ void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 
 		//제시어 업데이트
 		GSPaint->CATCH_MIND_SUGGESTION = Suggestion;
-
 		
 		//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
 		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::CatchMind;
 
 		//30초 동안 선택받은 플레이어는 페인트 볼을 쏠 수 있고, 나머지는 정답을 서버에 전송 가능
 		StartTimer(GSPaint, 10.f);
+
+		GetWorldTimerManager().SetTimer(CatchMindMiniGameTimerHandle, FTimerDelegate::CreateLambda([this]()
+		{
+			EndCatchMindMiniGame();
+		}), 10, false);
 	}
 }
 

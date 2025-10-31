@@ -96,6 +96,12 @@ void ASQP_PC_PaintRoom::OnPossess(APawn* InPawn)
 	}
 }
 
+void ASQP_PC_PaintRoom::Client_NotifyAnswerIsWrong_Implementation()
+{
+	//서버에서 오답이라는 피드백이 왔으므로 위젯으로 표시
+	CatchMindWidget->ShowWrong();
+}
+
 UTexture2D* ASQP_PC_PaintRoom::LoadTextureByIndex(int32 Index)
 {
 	FString Path = FString::Printf(
@@ -103,23 +109,23 @@ UTexture2D* ASQP_PC_PaintRoom::LoadTextureByIndex(int32 Index)
 	return Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), nullptr, *Path));
 }
 
-void ASQP_PC_PaintRoom::Client_ReceiveCatchMindSuggestion_Implementation(const FString& Suggestion)
+void ASQP_PC_PaintRoom::Client_ReceiveCatchMindSuggestion_Implementation(const FString& Suggestion, const FString& Hint)
 {
 	//서버에서 오답이라는 피드백이 왔으므로 위젯으로 표시
-	CatchMindWidget->ShowWrong();
+	CatchMindWidget->SetSuggestionText(Suggestion, Hint);
 }
 
 void ASQP_PC_PaintRoom::Server_ReceiveCatchMindAnswer_Implementation(const FString& Answer)
 {
-	if (const auto GS = Cast<ASQP_GS_PaintRoom>(GetWorld()->GetGameState()))
+	if (const auto GSPaint = Cast<ASQP_GS_PaintRoom>(GetWorld()->GetGameState()))
 	{
 		//정답 여부 확인
-		if (GS->CheckCatchMindAnswer(Answer))
+		if (GSPaint->CheckCatchMindAnswer(Answer))
 		{
 			PRINTLOGNET(TEXT("Correct!"));
-			
+
 			//즉각적으로 캐치 마인드 미니 게임을 종료
-			if (const auto GM = Cast<ASQP_GM_PaintRoom>(GetWorld()->GetAuthGameMode()))
+			if (GM)
 			{
 				GM->EndCatchMindMiniGame();
 			}
@@ -130,17 +136,13 @@ void ASQP_PC_PaintRoom::Server_ReceiveCatchMindAnswer_Implementation(const FStri
 		else
 		{
 			PRINTLOGNET(TEXT("Who the fuck are you?"));
-			
+
 			//클라이언트에 오답 사실을 전닳
 			Client_NotifyAnswerIsWrong();
 		}
 	}
 }
 
-void ASQP_PC_PaintRoom::Client_ReceiveCatchMindSuggestion_Implementation(const FString& Suggestion, const FString& Hint)
-{
-	CatchMindWidget->SetSuggestionText(Suggestion, Hint);
-}
 
 void ASQP_PC_PaintRoom::Server_CountLike_Implementation(ASQP_PS_Master* TargetPS)
 {
