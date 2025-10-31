@@ -23,8 +23,13 @@ protected:
 	UPROPERTY()
 	TObjectPtr<class UMainUI> MainUI;
 	
+	UPROPERTY(meta=(BindWidget))
+	TSubclassOf<class UUserWidget> TimerUIClass;
+	
 public:
 	UMainUI* CreateMainUI();
 	class USlider* GetSliderUI();
 	FLinearColor GetCurrentColor();
+
+	class UTimerUI* CreateTimerUI();
 };

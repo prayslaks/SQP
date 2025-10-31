@@ -6,11 +6,17 @@
 #include "CatchMindWidget.h"
 #include "SkyViewPawn.h"
 #include "SQP.h"
+#include "SQP_GM_PaintRoom.h"
+#include "SQP_GS_PaintRoom.h"
 #include "SQP_PS_Master.h"
 #include "SQP_PS_PaintRoomComponent.h"
 #include "TankCharacter.h"
+#include "TimerUI.h"
+#include "UIManager.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
+#include "Kismet/GameplayStatics.h"
 
 ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 {
@@ -42,7 +48,11 @@ void ASQP_PC_PaintRoom::Server_UpdateLikes_Implementation(const int32 LikeNum)
 void ASQP_PC_PaintRoom::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	GM = Cast<ASQP_GM_PaintRoom>(UGameplayStatics::GetGameMode(GetWorld()));
+	GS = Cast<ASQP_GS_PaintRoom>(UGameplayStatics::GetGameState(this));
+	UIManager = GetWorld()->GetGameInstance()->GetSubsystem<UUIManager>();
+
 	if (HasAuthority())
 	{
 		SpawnSkyViewPawn();
@@ -59,9 +69,24 @@ void ASQP_PC_PaintRoom::BeginPlay()
 				CatchMindWidget->HideAll();
 				CatchMindWidget->AddToViewport();
 			}
-		}	
+		}
+		TimerUI = UIManager->CreateTimerUI();
 	}
 }
+
+void ASQP_PC_PaintRoom::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (GS)
+	{
+		if (IsLocalController())
+		{
+			ReplicatedCountDown();
+		}
+	}
+}
+
 
 void ASQP_PC_PaintRoom::OnPossess(APawn* InPawn)
 {
@@ -72,7 +97,7 @@ void ASQP_PC_PaintRoom::OnPossess(APawn* InPawn)
 		DynMat = player->GetMesh()->CreateAndSetMaterialInstanceDynamic(0);
 	}
 
-	
+
 	// int32 Index = GetWorld()->GetGameState()->PlayerArray.IndexOfByKey(this);
 	// UTexture2D* Tex = LoadTextureByIndex(Index);
 	// if (DynMat && Tex)
@@ -146,4 +171,42 @@ void ASQP_PC_PaintRoom::Server_PossessSkyView_Implementation()
 void ASQP_PC_PaintRoom::Server_PossessPreviousPawn_Implementation()
 {
 	Possess(PreviousPawn);
+}
+
+void ASQP_PC_PaintRoom::ReplicatedCountDown()
+{
+	if (GS->bOnCountdown)
+	{
+		Elapsed = GS->GetServerWorldTimeSeconds() - GS->CountdownStartTime;
+		Remaining = GS->CountdownTotalTime - Elapsed;
+		
+		RemainingTime = FMath::CeilToInt(Remaining);
+		if (RemainingTime != LastRemainingTime)
+		{
+			UpdateCountdownUI(RemainingTime, TimerUI);
+			LastRemainingTime = RemainingTime;
+		}
+		if (Remaining < 0.f)
+		{
+			Remaining = 0.f;
+			GS->bOnCountdown = false;
+			LastRemainingTime = -1;
+			if (HasAuthority())
+			{
+				
+				GM->EndCatchMindMiniGame();
+			}
+		}
+	}
+	
+}
+
+void ASQP_PC_PaintRoom::UpdateCountdownUI(int RemainingSeconds, UTimerUI* UI)
+{
+	FString RichText = FString::Printf(TEXT("<Timer>%d</>"), RemainingSeconds);
+
+	if (UI)
+	{
+		UI->TimerRichTextBlock->SetText(FText::FromString(RichText));
+	}
 }

@@ -9,6 +9,7 @@
 #include "SQP_PS_Master.h"
 #include "UIManager.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Components/BackgroundBlur.h"
 #include "Components/Button.h"
 #include "Components/ScaleBox.h"
 #include "Components/Slider.h"
@@ -87,6 +88,14 @@ void UMainUIComponent::SetMainUIScale(float Scale)
 	}
 }
 
+void UMainUIComponent::SetBlurStrength(float Value)
+{
+	if (MainUI)
+	{
+		MainUI->BlurBackground->SetBlurStrength(Value);
+	}
+}
+
 void UMainUIComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -140,12 +149,23 @@ void UMainUIComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	BillboardLikeUI();
 
 	ElapsedTime += DeltaTime;
+
 	if (bScaleUp)
 	{
-		SetMainUIScale(UEaseFunctionLibrary::LerpFloatEase(0.4, 1, ElapsedTime / TimeSpeed, EEaseType::EaseOutExpo));
+		SetMainUIScale(UEaseFunctionLibrary::LerpFloatEase(0.48f, 1.f, ElapsedTime / TimeSpeed, EEaseType::EaseOutExpo));
+		if (ElapsedBlurStrength <= 3.4f)
+		{
+			ElapsedBlurStrength = UEaseFunctionLibrary::LerpFloatEase(0.f, 3.1f, ElapsedTime / TimeSpeed, EEaseType::EaseOutExpo);
+			SetBlurStrength(ElapsedBlurStrength);
+		}
 		return;
 	}
-	SetMainUIScale(UEaseFunctionLibrary::LerpFloatEase(1, 0.4, ElapsedTime / TimeSpeed, EEaseType::EaseOutExpo));
+	SetMainUIScale(UEaseFunctionLibrary::LerpFloatEase(1.f, 0.48f, ElapsedTime / TimeSpeed, EEaseType::EaseOutExpo));
+	if (ElapsedBlurStrength >= 0.f)
+	{
+		ElapsedBlurStrength = UEaseFunctionLibrary::LerpFloatEase(3.1f, 0.f, ElapsedTime / TimeSpeed, EEaseType::EaseOutExpo);
+		SetBlurStrength(ElapsedBlurStrength);
+	}
 }
 
 void UMainUIComponent::BillboardLikeUI()
@@ -187,5 +207,4 @@ void UMainUIComponent::OnToggleMouse(const FInputActionValue& InputActionValue)
 
 void UMainUIComponent::OffToggleMouse()
 {
-	
 }

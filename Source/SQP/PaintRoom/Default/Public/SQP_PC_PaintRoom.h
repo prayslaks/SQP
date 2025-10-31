@@ -18,7 +18,15 @@ protected:
 	ASQP_PC_PaintRoom();
 	
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 
+	UPROPERTY()
+	TObjectPtr<class ASQP_GM_PaintRoom> GM;
+	UPROPERTY()
+	TObjectPtr<class ASQP_GS_PaintRoom> GS;
+	UPROPERTY()
+	TObjectPtr<class UUIManager> UIManager;
+\
 	UPROPERTY()
 	TObjectPtr<UMaterialInstanceDynamic> DynMat;
 	UTexture2D* LoadTextureByIndex(int32 Index);
@@ -66,4 +74,13 @@ public:
 	//캐치 마인드 위젯
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCatchMindWidget> CatchMindWidget;
+
+	UPROPERTY()
+	TObjectPtr<class UTimerUI> TimerUI;
+	float Elapsed;
+	float Remaining;
+	int32 RemainingTime;
+	int32 LastRemainingTime = -1;
+	void ReplicatedCountDown();
+	void UpdateCountdownUI(int RemainingSeconds, class UTimerUI* UI);
 };

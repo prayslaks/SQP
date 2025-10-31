@@ -20,6 +20,9 @@ void ASQP_GS_PaintRoom::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	//리플리케이션 등록
 	DOREPLIFETIME(ASQP_GS_PaintRoom, PaintExecutionDataSnapshot);
 	DOREPLIFETIME(ASQP_GS_PaintRoom, PaintRoomState);
+	DOREPLIFETIME(ASQP_GS_PaintRoom, CountdownStartTime)
+	DOREPLIFETIME(ASQP_GS_PaintRoom, CountdownTotalTime)
+	DOREPLIFETIME(ASQP_GS_PaintRoom, bOnCountdown)
 }
 
 void ASQP_GS_PaintRoom::OnRep_PaintExecutionDataSnapshot()

@@ -74,4 +74,7 @@ public:
 	TObjectPtr<class UScaleBox> MainUIScaleBox;
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<class URichTextBlock> TimerRichTextBlock;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UBackgroundBlur> BlurBackground;
 };

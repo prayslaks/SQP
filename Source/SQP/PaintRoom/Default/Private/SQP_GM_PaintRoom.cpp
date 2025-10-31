@@ -10,6 +10,7 @@
 #include "SQP_PC_PaintRoom.h"
 #include "SQP_PS_Master.h"
 #include "SQP_PS_PaintRoomComponent.h"
+#include "Net/UnrealNetwork.h"
 
 ASQP_GM_PaintRoom::ASQP_GM_PaintRoom()
 {
@@ -74,6 +75,12 @@ void ASQP_GM_PaintRoom::BeginPlay()
 	}
 }
 
+void ASQP_GM_PaintRoom::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+}
+
 void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 {
 	if (CatchMindMiniGameTimerHandle.IsValid())
@@ -128,16 +135,12 @@ void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 			}
 			TempPCPaintArray[i]->Client_ReceiveCatchMindSuggestion(Target);
 		}
-
+		
 		//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
 		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::CatchMind;
 
 		//30초 동안 선택받은 플레이어는 페인트 볼을 쏠 수 있고, 나머지는 정답을 서버에 전송 가능
-		GetWorldTimerManager().SetTimer(CatchMindMiniGameTimerHandle, FTimerDelegate::CreateLambda([this]()
-		{
-			//30초 후에 캐치 마인드 미니 게임 종료
-			EndCatchMindMiniGame();
-		}), 10, false);
+		StartTimer(GSPaint, 10.f);
 	}
 }
 
@@ -164,4 +167,11 @@ void ASQP_GM_PaintRoom::EndCatchMindMiniGame()
 		//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
 		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::None;
 	}
+}
+
+void ASQP_GM_PaintRoom::StartTimer(ASQP_GS_PaintRoom* GS, float Time)
+{
+	GS->CountdownStartTime = GetWorld()->GetTimeSeconds();
+	GS->CountdownTotalTime = Time;
+	GS->bOnCountdown = true;
 }

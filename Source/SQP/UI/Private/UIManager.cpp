@@ -4,15 +4,23 @@
 #include "UIManager.h"
 
 #include "MainUI.h"
+#include "TimerUI.h"
 #include "Blueprint/UserWidget.h"
 
 
 UUIManager::UUIManager()
 {
-	ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("Class'/Game/Splatoon/UI/WBP_MainUI.WBP_MainUI_C'"));
-	if (WidgetClassFinder.Succeeded())
+	ConstructorHelpers::FClassFinder<UUserWidget> MainUIClassFinder(TEXT("Class'/Game/Splatoon/UI/WBP_MainUI.WBP_MainUI_C'"));
+	if (MainUIClassFinder.Succeeded())
 	{
-		MainUIClass = WidgetClassFinder.Class;
+		MainUIClass = MainUIClassFinder.Class;
+	}
+
+	ConstructorHelpers::FClassFinder<UUserWidget> TimerUIClassFinder(
+		TEXT("Class'/Game/Splatoon/UI/WBP_TimerUI.WBP_TimerUI_C'"));
+	if (TimerUIClassFinder.Succeeded())
+	{
+		TimerUIClass = TimerUIClassFinder.Class;
 	}
 }
 
@@ -45,4 +53,12 @@ FLinearColor UUIManager::GetCurrentColor()
 		return FLinearColor::White;
 	}
 	return MainUI->GetBorderColor();
+}
+
+UTimerUI* UUIManager::CreateTimerUI()
+{
+	UTimerUI* TimerUI = CreateWidget<UTimerUI>(GetWorld(), TimerUIClass);
+	TimerUI->AddToViewport();
+	TimerUI->SetIsFocusable(false);
+	return TimerUI;
 }

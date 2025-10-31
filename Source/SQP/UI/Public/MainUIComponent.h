@@ -55,4 +55,7 @@ protected:
 	bool bScaleUp = false;
 	float ElapsedTime = 0.f;
 	float TimeSpeed = 0.5f;
+
+	void SetBlurStrength(float Value);
+	float ElapsedBlurStrength = 0.f;
 };

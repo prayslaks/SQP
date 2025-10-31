@@ -71,4 +71,12 @@ protected:
 	//서버의 페인트 룸의 상태가 변화했을 때 호출되는 리플리케이션 콜백
 	UFUNCTION()
 	void OnRep_PaintRoomState();
+
+public:
+	UPROPERTY(Replicated)
+	float CountdownStartTime;
+	UPROPERTY(Replicated)
+	float CountdownTotalTime;
+	UPROPERTY(Replicated)
+	bool bOnCountdown = false;
 };
