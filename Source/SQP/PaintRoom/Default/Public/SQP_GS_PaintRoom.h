@@ -105,7 +105,6 @@ public:
 	float CountdownTotalTime;
 	UPROPERTY(Replicated)
 	bool bOnCountdown = false;
-};
 
 	//캐치 마인드 제시어
 	UPROPERTY(VisibleAnywhere)
