@@ -70,6 +70,7 @@ void USQP_PS_PaintRoomComponent::OnRep_PaintRoomRole()
 		case EPaintRoomRole::None:
 			{
 				PCPaint->CatchMindWidget->HideAll();
+				//MUST 그림경쟁 UI 업데이트
 				break;
 			}
 		case EPaintRoomRole::CatchMindPainter:
@@ -82,9 +83,15 @@ void USQP_PS_PaintRoomComponent::OnRep_PaintRoomRole()
 				PCPaint->CatchMindWidget->ShowParticipant();
 				break;
 			}
+		case EPaintRoomRole::CompetitionPainter:
+			{
+				//MUST 그림경쟁 UI 업데이트
+				break;
+			}
 		default:
 			{
 				PCPaint->CatchMindWidget->HideAll();
+				//MUST 그림경쟁 UI 업데이트
 				break;
 			}
 		}	

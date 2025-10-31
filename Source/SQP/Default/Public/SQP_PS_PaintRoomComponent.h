@@ -13,6 +13,7 @@ enum class EPaintRoomRole : uint8
 	None = 0,
 	CatchMindPainter = 1,
 	CatchMindParticipant = 2,
+	CompetitionPainter = 3,
 };
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
