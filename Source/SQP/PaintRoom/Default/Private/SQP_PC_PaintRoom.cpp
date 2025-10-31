@@ -6,6 +6,8 @@
 #include "CatchMindWidget.h"
 #include "SkyViewPawn.h"
 #include "SQP.h"
+#include "SQP_GM_PaintRoom.h"
+#include "SQP_GS_PaintRoom.h"
 #include "SQP_PS_Master.h"
 #include "SQP_PS_PaintRoomComponent.h"
 #include "TankCharacter.h"
@@ -126,6 +128,40 @@ void ASQP_PC_PaintRoom::SpawnSkyViewPawn()
 void ASQP_PC_PaintRoom::OnSkyView()
 {
 	Server_PossessSkyView();
+}
+
+void ASQP_PC_PaintRoom::Client_NotifyAnswerIsWrong_Implementation()
+{
+	//서버에서 오답이라는 피드백이 왔으므로 위젯으로 표시
+	CatchMindWidget->ShowWrong();
+}
+
+void ASQP_PC_PaintRoom::Server_ReceiveCatchMindAnswer_Implementation(const FString& Answer)
+{
+	if (const auto GS = Cast<ASQP_GS_PaintRoom>(GetWorld()->GetGameState()))
+	{
+		//정답 여부 확인
+		if (GS->CheckCatchMindAnswer(Answer))
+		{
+			PRINTLOGNET(TEXT("Correct!"));
+			
+			//즉각적으로 캐치 마인드 미니 게임을 종료
+			if (const auto GM = Cast<ASQP_GM_PaintRoom>(GetWorld()->GetAuthGameMode()))
+			{
+				GM->EndCatchMindMiniGame();
+			}
+
+			//클라이언트들에 정답 사실을 전파
+			GS->Multicast_BroadcastSomeoneWin(GetPlayerState<ASQP_PS_Master>());
+		}
+		else
+		{
+			PRINTLOGNET(TEXT("Who the fuck are you?"));
+			
+			//클라이언트에 오답 사실을 전닳
+			Client_NotifyAnswerIsWrong();
+		}
+	}
 }
 
 void ASQP_PC_PaintRoom::Client_ReceiveCatchMindSuggestion_Implementation(const FString& Suggestion)

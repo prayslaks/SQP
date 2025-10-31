@@ -59,6 +59,14 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveCatchMindSuggestion(const FString& Suggestion);
 
+	//서버에게 캐치마인드 정답을 보내주는 Server RPC
+	UFUNCTION(Server, Reliable)
+	void Server_ReceiveCatchMindAnswer(const FString& Answer);
+
+	//클라이언트에 오답 사실을 보내주는 Client RPC
+	UFUNCTION(Client, Reliable)
+	void Client_NotifyAnswerIsWrong();
+
 	//캐치 마인드 위젯 블루프린트 클래스
 	UPROPERTY(VisibleAnywhere)
 	TSubclassOf<UUserWidget> CatchMindWidgetClass;

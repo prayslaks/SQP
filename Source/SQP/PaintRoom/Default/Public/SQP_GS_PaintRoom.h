@@ -52,6 +52,10 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SetCompareBImage(UTexture2D* Image);
 
+	//캐치마인드 정답자에 대해 전파하는 메서드
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_BroadcastSomeoneWin(APlayerState* WinnerPS);
+
 	//페인트 룸 스테이트를 관리하는 프로퍼티
 	__declspec(property(get=GetPaintRoomState, put=SetPaintRoomState)) EPaintRoomState PAINT_ROOM_STATE;
 	UFUNCTION()
@@ -63,6 +67,20 @@ public:
 		OnRep_PaintRoomState();
 	};
 
+	//캐치마인드 제시어를 관리하는 프로퍼티
+	__declspec(property(get=GetCatchMindSuggestion, put=SetCatchMindSuggestion)) FString CATCH_MIND_SUGGESTION;
+	UFUNCTION()
+	FORCEINLINE FString GetCatchMindSuggestion() const { return CatchMindSuggestion; }
+	UFUNCTION()
+	FORCEINLINE void SetCatchMindSuggestion(const FString& Value)
+	{
+		CatchMindSuggestion = Value;
+	}
+
+	//캐치 마인드 정답을 확인해주는 메서드
+	UFUNCTION()
+	bool CheckCatchMindAnswer(const FString& OtherAnswer);
+
 protected:
 	//페인트 룸의 상태
 	UPROPERTY(ReplicatedUsing=OnRep_PaintRoomState, VisibleAnywhere)
@@ -71,4 +89,8 @@ protected:
 	//서버의 페인트 룸의 상태가 변화했을 때 호출되는 리플리케이션 콜백
 	UFUNCTION()
 	void OnRep_PaintRoomState();
+
+	//캐치 마인드 제시어
+	UPROPERTY(VisibleAnywhere)
+	FString CatchMindSuggestion;
 };

@@ -3,8 +3,11 @@
 
 #include "SQP_GS_PaintRoom.h"
 
+#include "CatchMindWidget.h"
 #include "SQPPaintWorldSubsystem.h"
+#include "SQP_PC_PaintRoom.h"
 #include "SQP_SG_PaintRoom.h"
+#include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
 
 ASQP_GS_PaintRoom::ASQP_GS_PaintRoom()
@@ -53,9 +56,48 @@ void ASQP_GS_PaintRoom::OnRep_PaintExecutionDataSnapshot()
 	}
 }
 
+void ASQP_GS_PaintRoom::Multicast_BroadcastSomeoneWin_Implementation(APlayerState* WinnerPS)
+{
+	if (const auto PCPaint = Cast<ASQP_PC_PaintRoom>(GetWorld()->GetFirstPlayerController()))
+	{
+		if (PCPaint->PlayerState == WinnerPS)
+		{
+			PCPaint->CatchMindWidget->ShowWin(WinnerPS->GetPlayerName());
+		}
+		else
+		{
+			PCPaint->CatchMindWidget->ShowSomeoneWin(WinnerPS->GetPlayerName());
+		}
+	}
+}
+
+bool ASQP_GS_PaintRoom::CheckCatchMindAnswer(const FString& OtherAnswer)
+{
+	return CatchMindSuggestion.Equals(OtherAnswer);
+}
+
 void ASQP_GS_PaintRoom::OnRep_PaintRoomState()
 {
-	//서버에서 캐치마인드가 시작되었으므로 관련 UI를 업데이트 한다
+	if (const ASQP_PC_PaintRoom* PCPaint = Cast<ASQP_PC_PaintRoom>(GetWorld()->GetFirstPlayerController()))
+	{
+		//서버에서 캐치마인드가 시작되었으므로 관련 UI를 업데이트 한다
+		switch (PAINT_ROOM_STATE)
+		{
+		case EPaintRoomState::None:
+			{
+				PCPaint->CatchMindWidget->HideAll();
+				break;
+			}
+		case EPaintRoomState::CatchMind:
+			{
+				break;
+			}
+		default:
+			{
+				break;
+			};
+		}	
+	}
 }
 
 void ASQP_GS_PaintRoom::Multicast_SetRandomImage_Implementation(UTexture2D* Image)

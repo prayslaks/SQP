@@ -117,16 +117,19 @@ void UMainMenuWidget::OnBackButtonClicked()
 
 void UMainMenuWidget::OnEnterNicknameTextCommitted(const FText& InText, ETextCommit::Type InCommitMethod)
 {
-	if (const FString NewNickname = InText.ToString(); NewNickname.Len() > 0)
+	if (InCommitMethod == ETextCommit::Type::OnEnter)
 	{
-		if (const auto GI = Cast<USQP_GI>(GetGameInstance()))
+		if (const FString NewNickname = InText.ToString(); NewNickname.Len() > 0)
 		{
-			//게임 인스턴스에 입력한 정보를 저장
-			GI->AssignNewUser(NewNickname);
-		}
+			if (const auto GI = Cast<USQP_GI>(GetGameInstance()))
+			{
+				//게임 인스턴스에 입력한 정보를 저장
+				GI->AssignNewUser(NewNickname);
+			}
 
-		//비로소 메인 메뉴로 전환
-		WidgetSwitcher->SetActiveWidgetIndex(0);
+			//비로소 메인 메뉴로 전환
+			WidgetSwitcher->SetActiveWidgetIndex(0);
+		}	
 	}
 }
 

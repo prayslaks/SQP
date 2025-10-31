@@ -99,7 +99,7 @@ void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 		const int32 Size = TempPSMasterArray.Num();
 		
 		//이번에 그림을 제시어를 묘사할 캐치마인드 플레이어를 선택
-		const int PainterIdx = FMath::RandRange(0, Size);
+		const int PainterIdx = FMath::RandRange(0, Size - 1);
 
 		//모든 유저의 페인트 룸 역할을 갱신
 		for (int i = 0; i < Size; i++)
@@ -129,6 +129,9 @@ void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 			TempPCPaintArray[i]->Client_ReceiveCatchMindSuggestion(Target);
 		}
 
+		//제시어 업데이트
+		GSPaint->CATCH_MIND_SUGGESTION = Suggestion;
+
 		//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
 		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::CatchMind;
 
@@ -137,12 +140,17 @@ void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 		{
 			//30초 후에 캐치 마인드 미니 게임 종료
 			EndCatchMindMiniGame();
-		}), 10, false);
+		}), 20, false);
 	}
 }
 
 void ASQP_GM_PaintRoom::EndCatchMindMiniGame()
 {
+	if (CatchMindMiniGameTimerHandle.IsValid())
+	{
+		CatchMindMiniGameTimerHandle.Invalidate();
+	}
+	
 	PRINTLOGNET(TEXT("GM_PaintRoom::EndCatchMindMiniGame"));
 	
 	if (const auto GSPaint = GetGameState<ASQP_GS_PaintRoom>())
@@ -161,7 +169,14 @@ void ASQP_GM_PaintRoom::EndCatchMindMiniGame()
 			TempPSMasterArray[i]->PaintRoom->PAINT_ROOM_ROLE = EPaintRoomRole::None;
 		}
 
-		//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
-		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::None;
+		//제시어 초기화
+		GSPaint->CATCH_MIND_SUGGESTION = FString();
+
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([this, GSPaint]()
+		{
+			//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
+			GSPaint->PAINT_ROOM_STATE = EPaintRoomState::None;
+		}), 5, false);
 	}
 }
