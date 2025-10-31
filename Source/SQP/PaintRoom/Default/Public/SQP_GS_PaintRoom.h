@@ -23,7 +23,7 @@ class SQP_API ASQP_GS_PaintRoom : public ASQPGameState
 
 public:
 	ASQP_GS_PaintRoom();
-
+	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	//서버로부터 PED 배열을 최초 1회만 전달받는다
@@ -43,14 +43,22 @@ public:
 	void Multicast_SetRandomImage(UTexture2D* Image);
 
 	UPROPERTY()
-	TObjectPtr<class UTexture2D> CompareAImage;
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_SetCompareAImage(UTexture2D* Image);
-
+	TMap<FString, UTexture2D*> PlayerTextureMap;
 	UPROPERTY()
-	TObjectPtr<class UTexture2D> CompareBImage;
+	TArray<UTexture2D*> ComparisonTextures;
+	TArray<FString> PlayerNames;
+
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_SetCompareBImage(UTexture2D* Image);
+	void Multicast_AddPlayerTexture(const FString& PlayerName, UTexture2D* Texture);
+
+	// for (const auto& Pair : PlayerTextureMap)
+	// {
+	// 	PlayerNames.Add(Pair.Key);
+	// 	ComparisonTextures.Add(Pair.Value);
+	// }
+	//
+	// UAISimilarityClient* AIClient = GetGameInstance()->GetSubsystem<UAISimilarityClient>();
+	// AIClient->CompareTextures(Original, ComparisonTextures, PlayerNames);
 
 	//캐치마인드 정답자에 대해 전파하는 메서드
 	UFUNCTION(NetMulticast, Reliable)
@@ -89,6 +97,15 @@ protected:
 	//서버의 페인트 룸의 상태가 변화했을 때 호출되는 리플리케이션 콜백
 	UFUNCTION()
 	void OnRep_PaintRoomState();
+
+public:
+	UPROPERTY(Replicated)
+	float CountdownStartTime;
+	UPROPERTY(Replicated)
+	float CountdownTotalTime;
+	UPROPERTY(Replicated)
+	bool bOnCountdown = false;
+};
 
 	//캐치 마인드 제시어
 	UPROPERTY(VisibleAnywhere)
