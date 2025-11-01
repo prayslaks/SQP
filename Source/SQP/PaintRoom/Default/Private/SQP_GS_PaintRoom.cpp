@@ -4,8 +4,11 @@
 #include "SQP_GS_PaintRoom.h"
 
 #include "CatchMindWidget.h"
+#include "PlaygroundScoreWidget.h"
+#include "SQP.h"
 #include "SQPPaintWorldSubsystem.h"
 #include "SQP_PC_PaintRoom.h"
+#include "SQP_PS_Master.h"
 #include "SQP_SG_PaintRoom.h"
 #include "GameFramework/PlayerState.h"
 #include "Net/UnrealNetwork.h"
@@ -16,13 +19,13 @@ ASQP_GS_PaintRoom::ASQP_GS_PaintRoom()
 	bReplicates = true;
 }
 
-void ASQP_GS_PaintRoom::BeginPlay()
+void ASQP_GS_PaintRoom::BeginPlay() 
 {
 	Super::BeginPlay();
 
 	if (HasAuthority())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Server GameState BeginPlay: Player count = %d"), PlayerArray.Num());
+		PRINTLOGNET(TEXT("Server GameState BeginPlay: Player count = %d"), PlayerArray.Num());
 	}
 	else
 	{
@@ -30,7 +33,7 @@ void ASQP_GS_PaintRoom::BeginPlay()
 		FTimerHandle TimerHandle;
 		GetWorldTimerManager().SetTimer(TimerHandle, [this]()
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Client GameState: Player count = %d"), PlayerArray.Num());
+			PRINTLOGNET(TEXT("Client GameState: Player count = %d"), PlayerArray.Num());
 			for (APlayerState* PlayerState : PlayerArray)
 			{
 				if (PlayerState)
@@ -105,7 +108,7 @@ void ASQP_GS_PaintRoom::Multicast_BroadcastSomeoneWin_Implementation(APlayerStat
 	}
 }
 
-bool ASQP_GS_PaintRoom::CheckCatchMindAnswer(const FString& OtherAnswer)
+bool ASQP_GS_PaintRoom::CheckCatchMindAnswer(const FString& OtherAnswer) const
 {
 	return CatchMindSuggestion.Equals(OtherAnswer);
 }
@@ -127,8 +130,13 @@ void ASQP_GS_PaintRoom::OnRep_PaintRoomState()
 				PCPaint->CatchMindWidget->HideAll();
 				break;
 			}
-		case EPaintRoomState::CatchMind:
+		case EPaintRoomState::CatchMindStart:
 			{
+				break;
+			}
+		case EPaintRoomState::CatchMindTimeUp:
+			{
+				PCPaint->CatchMindWidget->ShowTimeUp();
 				break;
 			}
 		default:

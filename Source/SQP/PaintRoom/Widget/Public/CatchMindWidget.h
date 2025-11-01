@@ -27,16 +27,19 @@ public:
 	void ShowParticipant() const;
 
 	UFUNCTION()
-	void ShowSomeoneWin(const FString& SomeoneName);
+	void ShowSomeoneWin(const FString& SomeoneName) const;
 
 	UFUNCTION()
-	void ShowWin(const FString& MyName);
+	void ShowWin(const FString& MyName) const;
 
 	UFUNCTION()
 	void ShowWrong();
 
 	UFUNCTION()
 	void SetSuggestionText(const FString& Suggestion, const FString& Hint) const;
+
+	UFUNCTION()
+	void ShowTimeUp() const;
 
 protected:
 	UPROPERTY(meta=(BindWidget))
@@ -65,6 +68,9 @@ protected:
 
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> CorrectTextBlock;
+
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<UTextBlock> TimeUpTextBlock;
 
 	UFUNCTION()
 	void OnAnswerTextCommitted(const FText& InText, ETextCommit::Type InCommitMethod);

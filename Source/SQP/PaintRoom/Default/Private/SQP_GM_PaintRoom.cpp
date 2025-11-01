@@ -103,18 +103,24 @@ void ASQP_GM_PaintRoom::BeginPlay()
 void ASQP_GM_PaintRoom::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
+
+	const auto PCPaint = Cast<ASQP_PC_PaintRoom>(NewPlayer);
+	const auto GSPaint = GetGameState<ASQP_GS_PaintRoom>();
 	
 	if (HasAuthority() && NewPlayer->IsLocalController())
 	{
-		if (APawn* OldPawn = NewPlayer->GetPawn())
+		if (const auto GI = GetGameInstance<USQP_GI>(); GI->bHostAsSpectator)
 		{
-			OldPawn->Destroy();
-		}
+			if (APawn* OldPawn = NewPlayer->GetPawn())
+			{
+				OldPawn->Destroy();
+			}
 		
-		ASkyViewPawn* SpectatorPawn = GetWorld()->SpawnActor<ASkyViewPawn>(ASkyViewPawn::StaticClass(), FVector(0.f, 0.f, 200.f), FRotator(0, 0, 0));
-		if (SpectatorPawn)
-		{
-			NewPlayer->Possess(SpectatorPawn);
+			ASkyViewPawn* SpectatorPawn = GetWorld()->SpawnActor<ASkyViewPawn>(ASkyViewPawn::StaticClass(), FVector(0.f, 0.f, 200.f), FRotator(0, 0, 0));
+			if (SpectatorPawn)
+			{
+				NewPlayer->Possess(SpectatorPawn);
+			}
 		}
 	}
 }
@@ -190,24 +196,21 @@ void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 		GSPaint->CATCH_MIND_SUGGESTION = Suggestion;
 		
 		//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
-		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::CatchMind;
+		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::CatchMindStart;
 
 		//30초 동안 선택받은 플레이어는 페인트 볼을 쏠 수 있고, 나머지는 정답을 서버에 전송 가능
-		StartTimer(GSPaint, 10.f);
+		StartTimer(GSPaint, 30);
 
 		GetWorldTimerManager().SetTimer(CatchMindMiniGameTimerHandle, FTimerDelegate::CreateLambda([this]()
 		{
 			EndCatchMindMiniGame();
-		}), 10, false);
+		}), 30, false);
 	}
 }
 
 void ASQP_GM_PaintRoom::EndCatchMindMiniGame()
 {
-	if (CatchMindMiniGameTimerHandle.IsValid())
-	{
-		CatchMindMiniGameTimerHandle.Invalidate();
-	}
+	GetWorldTimerManager().ClearTimer(CatchMindMiniGameTimerHandle);
 	
 	PRINTLOGNET(TEXT("GM_PaintRoom::EndCatchMindMiniGame"));
 	
@@ -229,6 +232,9 @@ void ASQP_GM_PaintRoom::EndCatchMindMiniGame()
 
 		//제시어 초기화
 		GSPaint->CATCH_MIND_SUGGESTION = FString();
+
+		//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
+		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::CatchMindTimeUp;
 
 		FTimerHandle TimerHandle;
 		GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([this, GSPaint]()
