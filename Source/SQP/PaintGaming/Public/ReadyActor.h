@@ -22,19 +22,57 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UTexture2D> ThumbsUp;
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UTexture2D> Headache;
+
 public:
+	UPROPERTY()
+	TObjectPtr<class UStaticMeshComponent> StaticMeshComp;
+	UPROPERTY()
+	TObjectPtr<class UMaterialInstanceDynamic> DynMat;
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(Replicated)
-	TArray<TObjectPtr<class ASQP_PS_Master>> ReadyPlayerState;
-	
-	bool bIsReady = false;
-	void StartReadyTimer();
-	void CountDown();
-	void CountDownText();
-	FTimerHandle ReadyTimer;
-	int32 ReadyTime;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Orbit")
+	FVector OrbitCenter = FVector::ZeroVector;
 
-	FOnTimerFinished OnTimerFinished;
+	// Radius in XY plane
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Orbit", meta=(ClampMin="0.0"))
+	float Radius = 2050.f;
+
+	// Angular speed in degrees per second
+	UPROPERTY(Replicated)
+	float AngularSpeedDeg = 20.f;
+
+	// Height (Z) while orbiting
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Orbit")
+	float FixedZ = 405.f;
+
+	// If true, actor will face the center. If false, orientation won't change.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Orbit")
+	bool bFaceCenter = true;
+
+	// If true, only rotate around yaw (no pitch/roll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Orbit")
+	bool bOnlyYaw = true;
+
+	// Start angle in degrees (0 => +X axis)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Orbit")
+	float StartAngleDeg = 0.f;
+
+private:
+	// internal angle in radians
+	float CurrentAngleRad;
+
+	UPROPERTY(Replicated)
+	bool bIsHit = false;
+
+	UPROPERTY(Replicated)
+	float ElapsedTime = 0.f;
+
+	UFUNCTION()
+	void OnOverLap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };

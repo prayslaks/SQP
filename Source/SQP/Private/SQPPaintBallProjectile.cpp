@@ -42,12 +42,6 @@ void ASQPPaintBallProjectile::OnOverlapBeginCallback(
 
 		//비활성화
 		InactivateProjectile();
-
-		if (AReadyActor* ReadyActor = Cast<AReadyActor>(OtherActor))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ReadyActor Casted"))
-			Server_AddReady(ReadyActor);
-		}
 	}
 }
 
@@ -55,14 +49,6 @@ void ASQPPaintBallProjectile::SetPaintColor(const FLinearColor& Value)
 {
 	PaintColor = Value;
 	Multicast_ColorPaintBall(Value);
-}
-
-void ASQPPaintBallProjectile::Server_AddReady_Implementation(AReadyActor* ReadyActor)
-{
-	if (ReadyActor->ReadyPlayerState.Contains(OwnerPlayerState) == false && ReadyActor->bIsReady == false)
-	{
-		ReadyActor->ReadyPlayerState.Add(OwnerPlayerState);
-	}
 }
 
 void ASQPPaintBallProjectile::Multicast_ColorPaintBall_Implementation(const FLinearColor Color)

@@ -46,6 +46,4 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<class ASQP_PS_Master> OwnerPlayerState;
-	UFUNCTION(Server, Reliable)
-	void Server_AddReady(class AReadyActor* ReadyActor);
 };
