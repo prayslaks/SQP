@@ -131,6 +131,10 @@ void ASQP_GS_PaintRoom::OnRep_PaintRoomState()
 				PCPaint->CatchMindWidget->ShowTimeUp();
 				break;
 			}
+		case EPaintRoomState::DrawingCompetition:
+			{
+				break;
+			}
 		default:
 			{
 				break;

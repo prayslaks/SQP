@@ -103,7 +103,7 @@ public:
 
 	void SpawnActorsInCircle(TSubclassOf<ACompareActor> ActorClass, int32 NumActors, float Radius, FVector Center);
 
-
-
 	void InitCompetition();
+	
+	UTexture2D* ConvertRenderTargetToTexture2D(UTextureRenderTarget2D* RenderTarget);
 };

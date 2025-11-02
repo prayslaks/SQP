@@ -94,7 +94,7 @@ void ASQP_PC_PaintRoom::BeginPlay()
 
 		//타이머 UI 생성
 		TimerUI = UIManager->CreateTimerUI();
-		TimerUI->SetVisibility(ESlateVisibility::Hidden);
+		TimerUI->TimerRichTextBlock->SetVisibility(ESlateVisibility::Hidden);
 		TimerUI->ReferImage->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
@@ -209,13 +209,11 @@ void ASQP_PC_PaintRoom::ReplicatedCountDown()
 		{
 			if (IsLocalController())
 			{
-				TimerUI->SetVisibility(ESlateVisibility::Visible);
-			}
-			if (HasAuthority())
-			{
-				if (GM->bIsCompetition)
+				TimerUI->TimerRichTextBlock->SetVisibility(ESlateVisibility::Visible);
+				if (GS->PAINT_ROOM_STATE == EPaintRoomState::DrawingCompetition)
 				{
-					Multicast_ShowReferIMG();
+					TimerUI->ReferImage->SetVisibility(ESlateVisibility::Visible);
+					TimerUI->ReferImage->SetBrushFromTexture(GS->RandomImage);
 				}
 			}
 			
@@ -229,7 +227,7 @@ void ASQP_PC_PaintRoom::ReplicatedCountDown()
 			LastRemainingTime = -1;
 			if (IsLocalController())
 			{
-				TimerUI->SetVisibility(ESlateVisibility::Hidden);
+				TimerUI->TimerRichTextBlock->SetVisibility(ESlateVisibility::Hidden);
 				TimerUI->ReferImage->SetVisibility(ESlateVisibility::Hidden);
 			}
 			if (HasAuthority())
@@ -257,8 +255,4 @@ void ASQP_PC_PaintRoom::UpdateCountdownUI(int RemainingSeconds, UTimerUI* UI)
 	}
 }
 
-void ASQP_PC_PaintRoom::Multicast_ShowReferIMG_Implementation()
-{
-	TimerUI->ReferImage->SetVisibility(ESlateVisibility::Visible);
-	TimerUI->ReferImage->SetBrushFromTexture(GS->RandomImage);
-}
+

@@ -1,12 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SQP_GM_PaintRoom.h"
-
 #include "AISimilarityClient.h"
 #include "CompareActor.h"
-#include "CompetitorName.h"
-#include "EngineUtils.h"
-#include "PaintGameActor.h"
 #include "PaintRoomWidget.h"
 #include "SkyViewPawn.h"
 #include "SQP.h"
@@ -17,12 +13,11 @@
 #include "SQP_PC_PaintRoom.h"
 #include "SQP_PS_Master.h"
 #include "SQP_PS_PaintRoomComponent.h"
-#include "TankCharacter.h"
 #include "Kismet/GameplayStatics.h"
-#include "Components/TextBlock.h"
-#include "Components/WidgetComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
+#include "Engine/Texture2D.h"
+#include "Engine/Engine.h"
+#include "Kismet/KismetRenderingLibrary.h"
+
 
 ASQP_GM_PaintRoom::ASQP_GM_PaintRoom()
 {
@@ -327,6 +322,8 @@ void ASQP_GM_PaintRoom::StartCompetitionMiniGame()
 	if (!GSPaint)
 		return;
 
+	GSPaint->PAINT_ROOM_STATE = EPaintRoomState::DrawingCompetition;
+
 	for (APlayerState* PS : GSPaint->PlayerArray)
 	{
 		APlayerController* PC = Cast<APlayerController>(PS->GetOwner());
@@ -353,15 +350,32 @@ void ASQP_GM_PaintRoom::StartCompetitionMiniGame()
 void ASQP_GM_PaintRoom::EndCompetitionMiniGame()
 {
 	ASQP_GS_PaintRoom* GSPaint = GetGameState<ASQP_GS_PaintRoom>();
-	
+	GSPaint->PAINT_ROOM_STATE = EPaintRoomState::None;
 	for (int32 i = 0; i < PaintableCompareActors.Num(); i++)
 	{
 		PlayerNames[i] = PaintableCompareActors[i]->CompetitionPlayerName;
 		UTexture* CompareImage;
 		PaintableCompareActors[i]->FindComponentByClass<UStaticMeshComponent>()->GetMaterial(0)->GetTextureParameterValue(TEXT("ColorRenderTarget"), CompareImage);
-		CompareTextures[i] = Cast<UTexture2D>(CompareImage);
+		UTextureRenderTarget2D* RT = Cast<UTextureRenderTarget2D>(CompareImage);
+		CompareTextures[i] = ConvertRenderTargetToTexture2D(RT);
+		if (!CompareTextures[i])
+		{
+			CompareTextures[i] = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture"));
+		}
+		if (CompareTextures[i])
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CompareImage: %s (%s)"),
+				*CompareTextures[i]->GetName(),
+				*CompareTextures[i]->GetPathName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CompareImage is NULL"));
+		}
 	}
-
+	UE_LOG(LogTemp, Warning, TEXT("%d"), PlayerNames.Num());
+	UE_LOG(LogTemp, Warning, TEXT("%d"), CompareTextures.Num());
+	
 	SimilarityClient->CompareTextures(GSPaint->RandomImage, CompareTextures, PlayerNames);
 
 	InitCompetition();
@@ -408,4 +422,29 @@ void ASQP_GM_PaintRoom::InitCompetition()
 	}
 	PaintableCompareActors.Empty();
 	bIsCompetition = false;
+}
+
+UTexture2D* ASQP_GM_PaintRoom::ConvertRenderTargetToTexture2D(UTextureRenderTarget2D* RenderTarget)
+{
+	if (!RenderTarget) return nullptr;
+
+	FTextureRenderTargetResource* RTResource = RenderTarget->GameThread_GetRenderTargetResource();
+	FReadSurfaceDataFlags ReadPixelFlags(RCM_UNorm);
+	ReadPixelFlags.SetLinearToGamma(false);
+
+	TArray<FColor> OutBMP;
+	RTResource->ReadPixels(OutBMP, ReadPixelFlags);
+
+	int32 Width = RenderTarget->SizeX;
+	int32 Height = RenderTarget->SizeY;
+
+	UTexture2D* NewTexture = UTexture2D::CreateTransient(Width, Height, PF_B8G8R8A8);
+	if (!NewTexture) return nullptr;
+
+	void* TextureData = NewTexture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+	FMemory::Memcpy(TextureData, OutBMP.GetData(), OutBMP.Num() * sizeof(FColor));
+	NewTexture->GetPlatformData()->Mips[0].BulkData.Unlock();
+
+	NewTexture->UpdateResource();
+	return NewTexture;
 }

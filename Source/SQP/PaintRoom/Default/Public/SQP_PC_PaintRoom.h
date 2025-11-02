@@ -97,7 +97,4 @@ public:
 	int32 LastRemainingTime = -1;
 	void ReplicatedCountDown();
 	void UpdateCountdownUI(int RemainingSeconds, class UTimerUI* UI);
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_ShowReferIMG();
 };
