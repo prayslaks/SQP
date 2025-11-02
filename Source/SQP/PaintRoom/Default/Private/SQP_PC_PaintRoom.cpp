@@ -17,10 +17,12 @@
 #include "UIManager.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/Image.h"
 #include "Components/RichTextBlock.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 {
@@ -39,6 +41,8 @@ ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 	{
 		PlaygroundScoreWidgetClass = Finder.Class;
 	}
+
+	bReplicates = true;
 }
 
 void ASQP_PC_PaintRoom::BeginPlay()
@@ -78,7 +82,15 @@ void ASQP_PC_PaintRoom::BeginPlay()
 		//타이머 UI 생성
 		TimerUI = UIManager->CreateTimerUI();
 		TimerUI->SetVisibility(ESlateVisibility::Hidden);
+		TimerUI->ReferImage->SetVisibility(ESlateVisibility::Hidden);
 	}
+}
+
+void ASQP_PC_PaintRoom::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASQP_PC_PaintRoom, bIsCompetition)
 }
 
 void ASQP_PC_PaintRoom::Tick(float DeltaSeconds)
@@ -190,6 +202,18 @@ void ASQP_PC_PaintRoom::ReplicatedCountDown()
 		if (RemainingTime != LastRemainingTime)
 		{
 			TimerUI->SetVisibility(ESlateVisibility::Visible);
+			if (HasAuthority())
+			{
+				if (GM->bIsCompetition)
+				{
+					bIsCompetition = true;
+				}
+			}
+			if (bIsCompetition)
+			{
+				TimerUI->ReferImage->SetVisibility(ESlateVisibility::Visible);
+				TimerUI->ReferImage->SetBrushFromTexture(GS->RandomImage);
+			}
 			UpdateCountdownUI(RemainingTime, TimerUI);
 			LastRemainingTime = RemainingTime;
 		}
@@ -199,6 +223,8 @@ void ASQP_PC_PaintRoom::ReplicatedCountDown()
 			GS->bOnCountdown = false;
 			LastRemainingTime = -1;
 			TimerUI->SetVisibility(ESlateVisibility::Hidden);
+			TimerUI->ReferImage->SetVisibility(ESlateVisibility::Hidden);
+			bIsCompetition = false;
 			if (HasAuthority())
 			{
 				if (GM->bIsCompetition)

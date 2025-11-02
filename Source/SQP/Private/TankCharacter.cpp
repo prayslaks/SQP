@@ -63,7 +63,7 @@ ATankCharacter::ATankCharacter()
 	InteractionComp->SetupAttachment(InteractionBoom);
 	InteractionComp->SetRelativeLocation(FVector(0.f, 0.f, -55.f));
 
-	SwimComp = CreateDefaultSubobject<USwimComponent>(TEXT("SwimComp"));
+	// SwimComp = CreateDefaultSubobject<USwimComponent>(TEXT("SwimComp"));
 
 	SkyViewComp = CreateDefaultSubobject<USkyViewComponent>(TEXT("SkyViewComp"));
 

@@ -353,7 +353,7 @@ void ASQP_GM_PaintRoom::EndCompetitionMiniGame()
 	{
 		PlayerNames[i] = PaintableCompareActors[i]->CompetitionPlayerName;
 		UTexture* CompareImage;
-		PaintableCompareActors[i]->DynMat->GetTextureParameterValue(TEXT("ColorRenderTarget"), CompareImage);
+		PaintableCompareActors[i]->FindComponentByClass<UStaticMeshComponent>()->GetMaterial(0)->GetTextureParameterValue(TEXT("ColorRenderTarget"), CompareImage);
 		CompareTextures[i] = Cast<UTexture2D>(CompareImage);
 	}
 
@@ -385,8 +385,6 @@ void ASQP_GM_PaintRoom::SpawnActorsInCircle(TSubclassOf<ACompareActor> ActorClas
 		FRotator Rot = (Center - Pos).Rotation();
 
 		ACompareActor* PaintableActor = World->SpawnActor<ACompareActor>(ActorClass, Pos, Rot);
-		PaintableActor->SetReplicates(true);
-		PaintableActor->bAlwaysRelevant = true;
 		GetGameState<ASQP_GS_PaintRoom>()->MultiCast_SetSpawnActorText(PaintableActor, PlayerNames[i]);
 
 		PaintableCompareActors.Add(PaintableActor);

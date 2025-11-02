@@ -28,7 +28,7 @@ void APaintGameActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	DynMat = FindComponentByClass<UStaticMeshComponent>()->CreateAndSetMaterialInstanceDynamic(0);
+	// DynMat = FindComponentByClass<UStaticMeshComponent>()->CreateAndSetMaterialInstanceDynamic(0);
 
 	GS = Cast<ASQP_GS_PaintRoom>(UGameplayStatics::GetGameState(GetWorld()));
 }
@@ -87,7 +87,7 @@ void APaintGameActor::CountDownText()
 		{
 			if (UMainUIComponent* MainUIComp = TankPlayer->FindComponentByClass<UMainUIComponent>())
 			{
-				MainUIComp->MainUI->TimerRichTextBlock->SetText(FText::FromString(RichText));
+				//MainUIComp->MainUI->TimerRichTextBlock->SetText(FText::FromString(RichText));
 			}
 		}
 	}

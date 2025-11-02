@@ -20,6 +20,7 @@ protected:
 	ASQP_PC_PaintRoom();
 	
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -89,4 +90,7 @@ public:
 	int32 LastRemainingTime = -1;
 	void ReplicatedCountDown();
 	void UpdateCountdownUI(int RemainingSeconds, class UTimerUI* UI);
+
+	UPROPERTY(Replicated)
+	bool bIsCompetition = false;
 };

@@ -24,13 +24,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY()
+	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class USceneComponent> RootComp;
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UWidgetComponent> NameUIComp;
-
-	UPROPERTY()
-	TObjectPtr<class UMaterialInstanceDynamic> DynMat;
 
 	UPROPERTY(Replicated)
 	FString CompetitionPlayerName;

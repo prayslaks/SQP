@@ -92,7 +92,7 @@ void AReadyActor::CountDownText()
 		{
 			if (UMainUIComponent* MainUIComp = TankPlayer->FindComponentByClass<UMainUIComponent>())
 			{
-				MainUIComp->MainUI->TimerRichTextBlock->SetText(FText::FromString(RichText));
+				//MainUIComp->MainUI->TimerRichTextBlock->SetText(FText::FromString(RichText));
 			}
 		}
 	}

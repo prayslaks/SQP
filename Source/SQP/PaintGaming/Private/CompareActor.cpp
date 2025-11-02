@@ -40,7 +40,7 @@ void ACompareActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	DynMat = FindComponentByClass<UStaticMeshComponent>()->CreateAndSetMaterialInstanceDynamic(0);
+	// DynMat = FindComponentByClass<UStaticMeshComponent>()->CreateAndSetMaterialInstanceDynamic(0);
 
 	SetPlayerNameText();
 }
