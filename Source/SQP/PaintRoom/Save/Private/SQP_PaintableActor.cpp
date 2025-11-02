@@ -25,6 +25,8 @@ ASQP_PaintableActor::ASQP_PaintableActor()
 void ASQP_PaintableActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	DynMat = FindComponentByClass<UStaticMeshComponent>()->CreateAndSetMaterialInstanceDynamic(0);
 }
 
 void ASQP_PaintableActor::OnConstruction(const FTransform& Transform)

@@ -68,7 +68,37 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StartCompetitionMiniGame();
 
+	//경쟁 미니 게임을 종료하는 메서드
+	UFUNCTION()
+	void EndCompetitionMiniGame();
+
+	bool bIsCompetition = false;
+
+	UPROPERTY()
+	TObjectPtr<class UAISimilarityClient> SimilarityClient;
+	UPROPERTY()
+	TObjectPtr<class APaintGameActor> PaintGameActor;
+	
 	//캐치 마인드 데이터 테이블
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<UDataTable> CatchMindMiniGameDataTable;
+	
+	UPROPERTY()
+	TSubclassOf<ASQP_PaintableActor> CompareActorClass;
+	
+	UPROPERTY()
+	TArray<APlayerState*> CompetitionPSs;
+	
+	UPROPERTY()
+	TMap<FString, UTexture2D*> PlayerTextureMap;
+	
+	UPROPERTY()
+	TArray<ASQP_PaintableActor*> PaintableCompareActors;
+	TArray<FString> PlayerNames;
+	UPROPERTY()
+	TArray<UTexture2D*> CompareTextures;
+
+	void SpawnActorsInCircle(TSubclassOf<ASQP_PaintableActor> ActorClass, int32 NumActors, float Radius, FVector Center);
+
+	void InitCompetition();
 };

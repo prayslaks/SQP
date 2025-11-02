@@ -2,6 +2,9 @@
 
 #include "SQP_GM_PaintRoom.h"
 
+#include "AISimilarityClient.h"
+#include "EngineUtils.h"
+#include "PaintGameActor.h"
 #include "PaintRoomWidget.h"
 #include "SkyViewPawn.h"
 #include "SQP.h"
@@ -13,6 +16,7 @@
 #include "SQP_PS_Master.h"
 #include "SQP_PS_PaintRoomComponent.h"
 #include "TankCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 ASQP_GM_PaintRoom::ASQP_GM_PaintRoom()
@@ -64,6 +68,13 @@ ASQP_GM_PaintRoom::ASQP_GM_PaintRoom()
 	{
 		CatchMindCanvasActorClass = Finder.Class;
 	}
+
+	if (static ConstructorHelpers::FClassFinder<ASQP_PaintableActor>
+		Finder(TEXT("/Game/Splatoon/Blueprint/PaintGaming/BP_Compare.BP_Compare_C"));
+		Finder.Succeeded())
+	{
+		CompareActorClass = Finder.Class;
+	}
 }
 
 void ASQP_GM_PaintRoom::BeginPlay()
@@ -98,6 +109,10 @@ void ASQP_GM_PaintRoom::BeginPlay()
 			GetGameState<ASQP_GS_PaintRoom>()->PaintExecutionDataSnapshot = SG_PaintRoom->ConstructFullPEDArray();
 		}
 	}
+
+	PaintGameActor = Cast<APaintGameActor>(UGameplayStatics::GetActorOfClass(GetWorld(), APaintGameActor::StaticClass()));
+
+	SimilarityClient = GetGameInstance()->GetSubsystem<UAISimilarityClient>();
 }
 
 void ASQP_GM_PaintRoom::PostLogin(APlayerController* NewPlayer)
@@ -251,5 +266,80 @@ void ASQP_GM_PaintRoom::StartTimer(ASQP_GS_PaintRoom* GS, float Time)
 
 void ASQP_GM_PaintRoom::StartCompetitionMiniGame()
 {
+	bIsCompetition = true;
 	
+	ASQP_GS_PaintRoom* GSPaint = GetGameState<ASQP_GS_PaintRoom>();
+	if (!GSPaint)
+		return;
+
+	for (APlayerState* PS : GSPaint->PlayerArray)
+	{
+		APlayerController* PC = Cast<APlayerController>(PS->GetOwner());
+
+		if (PC->HasAuthority())
+			continue;
+
+		PlayerNames.Add(PS->GetPlayerName());
+		// CompetitionPSs.Add(PS);
+	}
+	
+	int32 TotalPlayers = CompetitionPSs.Num();
+	
+	// 스폰 Canvas
+	SpawnActorsInCircle(CompareActorClass, TotalPlayers, 1500.f, FVector(0.f));
+
+	// 문제 그림 표시
+	PaintGameActor->StartGame();
+
+	// 게임 시작
+	StartTimer(GSPaint, 10.f);
+}
+
+void ASQP_GM_PaintRoom::EndCompetitionMiniGame()
+{
+	UTexture* Image;
+	PaintGameActor->DynMat->GetTextureParameterValue(TEXT("ReferenceImage"), Image);
+	UTexture2D* Image2D = Cast<UTexture2D>(Image);
+	
+	for (int32 i = 0; i < PaintableCompareActors.Num(); i++)
+	{
+		PlayerNames[i] = PaintableCompareActors[i]->CompetitionPlayerName;
+		UTexture* CompareImage;
+		PaintableCompareActors[i]->DynMat->GetTextureParameterValue(TEXT("ColorRenderTarget"), CompareImage);
+		CompareTextures[i] = Cast<UTexture2D>(CompareImage);
+	}
+	
+	SimilarityClient->CompareTextures(Image2D, CompareTextures, PlayerNames);
+
+	InitCompetition();
+}
+
+
+void ASQP_GM_PaintRoom::SpawnActorsInCircle(TSubclassOf<ASQP_PaintableActor> ActorClass, int32 NumActors, float Radius, FVector Center)
+{
+	if (!ActorClass || NumActors <= 0)
+		return;
+
+	UWorld* World = GetWorld();
+	if (!World)
+		return;
+
+	for (int32 i = 0; i < NumActors; ++i)
+	{
+		const float Angle = (2 * PI / NumActors) * i;
+		FVector Pos = Center + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0) * Radius;
+		FRotator Rot = (Center - Pos).Rotation();
+
+		ASQP_PaintableActor* PaintableActor = World->SpawnActor<ASQP_PaintableActor>(ActorClass, Pos, Rot);
+		PaintableActor->CompetitionPlayerName = PlayerNames[i];
+		PaintableCompareActors.Add(PaintableActor);
+	}
+}
+
+void ASQP_GM_PaintRoom::InitCompetition()
+{
+	PlayerNames.Empty();
+	CompareTextures.Empty();
+
+	bIsCompetition = false;
 }

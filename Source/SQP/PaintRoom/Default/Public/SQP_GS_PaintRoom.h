@@ -42,23 +42,11 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SetRandomImage(UTexture2D* Image);
 
-	UPROPERTY()
-	TMap<FString, UTexture2D*> PlayerTextureMap;
-	UPROPERTY()
-	TArray<UTexture2D*> ComparisonTextures;
-	TArray<FString> PlayerNames;
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_AddPlayerTexture(const FString& PlayerName, UTexture2D* Texture);
-
 	// for (const auto& Pair : PlayerTextureMap)
 	// {
 	// 	PlayerNames.Add(Pair.Key);
 	// 	ComparisonTextures.Add(Pair.Value);
 	// }
-	//
-	// UAISimilarityClient* AIClient = GetGameInstance()->GetSubsystem<UAISimilarityClient>();
-	// AIClient->CompareTextures(Original, ComparisonTextures, PlayerNames);
 
 	//캐치마인드 정답자에 대해 전파하는 메서드
 	UFUNCTION(NetMulticast, Reliable)

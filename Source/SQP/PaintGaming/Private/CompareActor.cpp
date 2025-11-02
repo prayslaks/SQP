@@ -42,7 +42,7 @@ void ACompareActor::BeginPlay()
 		Tags.AddUnique("PlayerB");
 	}
 
-	Client = GetGameInstance()->GetSubsystem<UAISimilarityClient>();
+	
 
 	GS = Cast<ASQP_GS_PaintRoom>(UGameplayStatics::GetGameState(GetWorld()));
 

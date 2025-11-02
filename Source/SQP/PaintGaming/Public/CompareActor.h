@@ -27,8 +27,7 @@ public:
 
 	
 
-	UPROPERTY()
-	TObjectPtr<class UAISimilarityClient> Client;
+	
 	UPROPERTY()
 	TObjectPtr<class ASQP_GS_PaintRoom> GS;
 

@@ -110,10 +110,7 @@ bool ASQP_GS_PaintRoom::CheckCatchMindAnswer(const FString& OtherAnswer)
 	return CatchMindSuggestion.Equals(OtherAnswer);
 }
 
-void ASQP_GS_PaintRoom::Multicast_AddPlayerTexture_Implementation(const FString& PlayerName, UTexture2D* Texture)
-{
-	PlayerTextureMap.Add(PlayerName, Texture);
-}
+
 
 void ASQP_GS_PaintRoom::OnRep_PaintRoomState()
 {

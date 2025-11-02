@@ -31,7 +31,7 @@ void APaintGameActor::BeginPlay()
 	AReadyActor* ReadyActor = Cast<AReadyActor>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), AReadyActor::StaticClass()));
 
-	ReadyActor->OnTimerFinished.BindUObject(this, &APaintGameActor::StartGameTimer);
+	ReadyActor->OnTimerFinished.BindUObject(this, &APaintGameActor::StartGame);
 
 	IMGManager = GetGameInstance()->GetSubsystem<UIMGManager>();
 	if (!IMGManager) return;
@@ -56,24 +56,14 @@ void APaintGameActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
-void APaintGameActor::StartGameTimer()
+void APaintGameActor::StartGame()
 {
-	StartTime = 10;
-
 	if (HasAuthority())
 	{
 		GS->Multicast_SetRandomImage(IMGManager->GetRandomImage());
 	}
 
 	ShowRandomImage(GS->RandomImage);
-	
-	GetWorld()->GetTimerManager().SetTimer(
-		StartTimer,
-		this,
-		&APaintGameActor::CountDown,
-		1.0f,
-		true
-	);
 }
 
 void APaintGameActor::CountDown()

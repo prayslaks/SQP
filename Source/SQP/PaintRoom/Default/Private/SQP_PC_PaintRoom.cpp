@@ -169,7 +169,14 @@ void ASQP_PC_PaintRoom::ReplicatedCountDown()
 			LastRemainingTime = -1;
 			if (HasAuthority())
 			{
-				GM->EndCatchMindMiniGame();
+				if (GM->bIsCompetition)
+				{
+					GM->EndCompetitionMiniGame();
+				}
+				else
+				{
+					GM->EndCatchMindMiniGame();
+				}
 			}
 		}
 	}

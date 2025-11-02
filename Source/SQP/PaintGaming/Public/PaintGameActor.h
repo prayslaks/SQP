@@ -25,17 +25,20 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<class UIMGManager> IMGManager;
-	UPROPERTY()
-	TObjectPtr<class UMaterialInstanceDynamic> DynMat;
+	
 	UPROPERTY()
 	TObjectPtr<class ASQP_GS_PaintRoom> GS;
 	void ShowRandomImage(UTexture2D* Image);
 	
+	
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UPROPERTY()
+	TObjectPtr<class UMaterialInstanceDynamic> DynMat;
 	
-	void StartGameTimer();
+	void StartGame();
 	void CountDown();
 	void CountDownText();
 	FTimerHandle StartTimer;
