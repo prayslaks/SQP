@@ -107,4 +107,13 @@ public:
 	int32 LastRemainingTime = -1;
 	void ReplicatedCountDown();
 	void UpdateCountdownUI(int RemainingSeconds, class UTimerUI* UI);
+	
+	UPROPERTY()
+	TObjectPtr<UAudioComponent> AudioComp1;
+	UPROPERTY()
+	TObjectPtr<UAudioComponent> AudioComp2;
+	UFUNCTION()
+	void OnOST1Finished();
+	UFUNCTION()
+	void OnOST2Finished();
 };

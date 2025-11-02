@@ -93,9 +93,6 @@ public:
 	TArray<APlayerState*> CompetitionPSs;
 	
 	UPROPERTY()
-	TMap<FString, UTexture2D*> PlayerTextureMap;
-	
-	UPROPERTY()
 	TArray<class ACompareActor*> PaintableCompareActors;
 	TArray<FString> PlayerNames;
 	UPROPERTY()

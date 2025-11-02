@@ -2,7 +2,6 @@
 
 
 #include "PaintRoom/Default/Public/SQP_PC_PaintRoom.h"
-
 #include "CatchMindWidget.h"
 #include "CompetitionWidget.h"
 #include "PlaygroundScoreWidget.h"
@@ -19,9 +18,11 @@
 #include "Components/Image.h"
 #include "Components/RichTextBlock.h"
 #include "Kismet/GameplayStatics.h"
-#include "PaintRoom/Widget/Private/PlaygroundMenuWidget.h"
 #include "PlaygroundMenuWidget.h"
-#include "Net/UnrealNetwork.h"
+#include "SFXManager.h"
+#include "SFXType.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
 
 ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 {
@@ -57,6 +58,25 @@ ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 		Finder.Succeeded())
 	{
 		CompetitionWidgetClass = Finder.Class;
+	}
+
+	AudioComp1 = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp1"));
+	AudioComp2 = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp2"));
+	AudioComp1->bAutoActivate = false;
+	AudioComp2->bAutoActivate = false;
+	
+	if (static ConstructorHelpers::FObjectFinder<USoundWave> USoundWave1(
+			TEXT("'/Game/Assets/Sounds/OST/Spray_Paint_Dreams-1.Spray_Paint_Dreams-1'"));
+		USoundWave1.Succeeded())
+	{
+		AudioComp1->SetSound(USoundWave1.Object);
+	}
+	
+	if (static ConstructorHelpers::FObjectFinder<USoundWave> USoundWave2(
+			TEXT("'/Game/Assets/Sounds/OST/Spray_Paint_Dreams-1.Spray_Paint_Dreams-2'"));
+		USoundWave2.Succeeded())
+	{
+		AudioComp2->SetSound(USoundWave2.Object);
 	}
 }
 
@@ -118,6 +138,33 @@ void ASQP_PC_PaintRoom::BeginPlay()
 		TimerUI = UIManager->CreateTimerUI();
 		TimerUI->TimerRichTextBlock->SetVisibility(ESlateVisibility::Hidden);
 		TimerUI->ReferImage->SetVisibility(ESlateVisibility::Hidden);
+
+		AudioComp1->Play();
+		if (AudioComp1)
+		{
+			AudioComp1->OnAudioFinished.AddDynamic(this, &ASQP_PC_PaintRoom::OnOST1Finished);
+		}
+		if (AudioComp2)
+		{
+			AudioComp2->OnAudioFinished.AddDynamic(this, &ASQP_PC_PaintRoom::OnOST2Finished);
+		}
+		
+	}
+}
+
+void ASQP_PC_PaintRoom::OnOST1Finished()
+{
+	if (IsLocalController())
+	{
+		AudioComp2->Play();
+	}
+}
+
+void ASQP_PC_PaintRoom::OnOST2Finished()
+{
+	if (IsLocalController())
+	{
+		AudioComp1->Play();
 	}
 }
 
@@ -150,7 +197,6 @@ void ASQP_PC_PaintRoom::Server_UpdateLikes_Implementation(const int32 LikeNum)
 {
 	GetPlayerState<ASQP_PS_Master>()->PaintRoom->LikeCounter = LikeNum;
 }
-
 
 
 void ASQP_PC_PaintRoom::OnPossess(APawn* InPawn)
@@ -238,7 +284,7 @@ void ASQP_PC_PaintRoom::ReplicatedCountDown()
 					TimerUI->ReferImage->SetBrushFromTexture(GS->RandomImage);
 				}
 			}
-			
+
 			UpdateCountdownUI(RemainingTime, TimerUI);
 			LastRemainingTime = RemainingTime;
 		}
@@ -276,5 +322,3 @@ void ASQP_PC_PaintRoom::UpdateCountdownUI(int RemainingSeconds, UTimerUI* UI)
 		UI->TimerRichTextBlock->SetText(FText::FromString(RichText));
 	}
 }
-
-

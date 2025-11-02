@@ -1,5 +1,4 @@
 ﻿#include "AISimilarityClient.h"
-
 #include "CompetitionWidget.h"
 #include "HttpModule.h"
 #include "IImageWrapper.h"
@@ -13,86 +12,87 @@
 
 static bool SafeTextureToPNG(UTexture2D* Texture, TArray<uint8>& OutData)
 {
-    OutData.Empty();
+	OutData.Empty();
 
-    // 유효성 검사
-    if (!IsValid(Texture))
-    {
-        UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Invalid Texture"));
-        return false;
-    }
+	// 유효성 검사
+	if (!IsValid(Texture))
+	{
+		UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Invalid Texture"));
+		return false;
+	}
 
-    FTexturePlatformData* PlatformData = Texture->GetPlatformData();
-    if (!PlatformData || PlatformData->Mips.Num() == 0)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Missing Platform Data or Mips"));
-        return false;
-    }
+	FTexturePlatformData* PlatformData = Texture->GetPlatformData();
+	if (!PlatformData || PlatformData->Mips.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Missing Platform Data or Mips"));
+		return false;
+	}
 
-    FTexture2DMipMap& Mip = PlatformData->Mips[0];
-    const int32 Width = Mip.SizeX;
-    const int32 Height = Mip.SizeY;
+	FTexture2DMipMap& Mip = PlatformData->Mips[0];
+	const int32 Width = Mip.SizeX;
+	const int32 Height = Mip.SizeY;
 
-    if (Width <= 0 || Height <= 0)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Invalid Texture Size: %d x %d"), Width, Height);
-        return false;
-    }
+	if (Width <= 0 || Height <= 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Invalid Texture Size: %d x %d"), Width, Height);
+		return false;
+	}
 
-    // BulkData 접근
-    void* Data = Mip.BulkData.Lock(LOCK_READ_ONLY);
-    if (!Data)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Failed to lock bulk data"));
-        return false;
-    }
+	// BulkData 접근
+	void* Data = Mip.BulkData.Lock(LOCK_READ_ONLY);
+	if (!Data)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Failed to lock bulk data"));
+		return false;
+	}
 
-    const int32 NumPixels = Width * Height;
-    TArray<FColor> Pixels;
-    Pixels.SetNumUninitialized(NumPixels);
+	const int32 NumPixels = Width * Height;
+	TArray<FColor> Pixels;
+	Pixels.SetNumUninitialized(NumPixels);
 
-    FMemory::Memcpy(Pixels.GetData(), Data, NumPixels * sizeof(FColor));
-    Mip.BulkData.Unlock();
+	FMemory::Memcpy(Pixels.GetData(), Data, NumPixels * sizeof(FColor));
+	Mip.BulkData.Unlock();
 
-    // ImageWrapper 모듈 로드
-    IImageWrapperModule* ImageWrapperModule = FModuleManager::LoadModulePtr<IImageWrapperModule>("ImageWrapper");
-    if (!ImageWrapperModule)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Failed to load ImageWrapper module"));
-        return false;
-    }
+	// ImageWrapper 모듈 로드
+	IImageWrapperModule* ImageWrapperModule = FModuleManager::LoadModulePtr<IImageWrapperModule>("ImageWrapper");
+	if (!ImageWrapperModule)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Failed to load ImageWrapper module"));
+		return false;
+	}
 
-    TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule->CreateImageWrapper(EImageFormat::PNG);
-    if (!ImageWrapper.IsValid())
-    {
-        UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Failed to create ImageWrapper"));
-        return false;
-    }
+	TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule->CreateImageWrapper(EImageFormat::PNG);
+	if (!ImageWrapper.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Failed to create ImageWrapper"));
+		return false;
+	}
 
-    // RAW 데이터 설정
-    if (!ImageWrapper->SetRaw(Pixels.GetData(), Pixels.Num() * sizeof(FColor),
-                              Width, Height, ERGBFormat::BGRA, 8))
-    {
-        UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Failed to set raw data for ImageWrapper"));
-        return false;
-    }
+	// RAW 데이터 설정
+	if (!ImageWrapper->SetRaw(Pixels.GetData(), Pixels.Num() * sizeof(FColor),
+	                          Width, Height, ERGBFormat::BGRA, 8))
+	{
+		UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Failed to set raw data for ImageWrapper"));
+		return false;
+	}
 
-    // 압축 및 변환 (TArray64 → TArray)
-    const TArray64<uint8>& CompressedData64 = ImageWrapper->GetCompressed(100);
-    if (CompressedData64.Num() == 0)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Compression failed"));
-        return false;
-    }
+	// 압축 및 변환 (TArray64 → TArray)
+	const TArray64<uint8>& CompressedData64 = ImageWrapper->GetCompressed(100);
+	if (CompressedData64.Num() == 0)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[SafeTextureToPNG] Compression failed"));
+		return false;
+	}
 
-    OutData.Reset(CompressedData64.Num());
-    OutData.Append(CompressedData64.GetData(), CompressedData64.Num());
+	OutData.Reset(CompressedData64.Num());
+	OutData.Append(CompressedData64.GetData(), CompressedData64.Num());
 
-    UE_LOG(LogTemp, Log, TEXT("[SafeTextureToPNG] PNG Conversion Success: %d bytes"), OutData.Num());
-    return true;
+	UE_LOG(LogTemp, Log, TEXT("[SafeTextureToPNG] PNG Conversion Success: %d bytes"), OutData.Num());
+	return true;
 }
 
-void UAISimilarityClient::CompareTextures(UTexture2D* Original, const TArray<UTexture2D*>& ComparisonTextures, const TArray<FString>& PlayerNames)
+void UAISimilarityClient::CompareTextures(UTexture2D* Original, const TArray<UTexture2D*>& ComparisonTextures,
+                                          const TArray<FString>& PlayerNames)
 {
 	if (!Original || ComparisonTextures.Num() == 0)
 	{
@@ -179,13 +179,19 @@ void UAISimilarityClient::CompareTextures(UTexture2D* Original, const TArray<UTe
 
 						for (int32 i = 0; i < GS->PlayerArray.Num(); ++i)
 						{
-							if (i == Index)
+							if (Cast<ASQP_PC_PaintRoom>(GS->PlayerArray[i]->GetPlayerController())->
+										CompetitionWidget)
 							{
-								Cast<ASQP_PC_PaintRoom>(GS->PlayerArray[i]->GetPlayerController())->CompetitionWidget->ShowWin(PlayerNames[Index]);
-							}
-							else
-							{
-								Cast<ASQP_PC_PaintRoom>(GS->PlayerArray[i]->GetPlayerController())->CompetitionWidget->ShowSomeoneWin(PlayerNames[Index]);
+								if (i == Index)
+								{
+									Cast<ASQP_PC_PaintRoom>(GS->PlayerArray[i]->GetPlayerController())->
+										CompetitionWidget->ShowWin(PlayerNames[Index]);
+								}
+								else
+								{
+									Cast<ASQP_PC_PaintRoom>(GS->PlayerArray[i]->GetPlayerController())->
+										CompetitionWidget->ShowSomeoneWin(PlayerNames[Index]);
+								}
 							}
 						}
 					}
@@ -200,6 +206,6 @@ void UAISimilarityClient::CompareTextures(UTexture2D* Original, const TArray<UTe
 				UE_LOG(LogTemp, Error, TEXT("HTTP Request Failed"));
 			}
 		});
-	
+
 	Request->ProcessRequest();
 }

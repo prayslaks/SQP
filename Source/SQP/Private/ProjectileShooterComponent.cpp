@@ -7,6 +7,7 @@
 #include "SQPPaintBallProjectile.h"
 #include "SQP_PS_Master.h"
 #include "SQP_PS_PaintRoomComponent.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/Character.h"
 
 UProjectileShooterComponent::UProjectileShooterComponent() :
@@ -18,6 +19,16 @@ UProjectileShooterComponent::UProjectileShooterComponent() :
 {
 	//컴포넌트 틱 활성화
 	PrimaryComponentTick.bCanEverTick = true;
+
+	AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp2"));
+	AudioComp->bAutoActivate = false;
+
+	if (static ConstructorHelpers::FObjectFinder<USoundWave> USoundWave(
+			TEXT("'/Game/Assets/Sounds/Boink.Boink'"));
+		USoundWave.Succeeded())
+	{
+		AudioComp->SetSound(USoundWave.Object);
+	}
 }
 
 void UProjectileShooterComponent::BeginPlay()
@@ -28,10 +39,11 @@ void UProjectileShooterComponent::BeginPlay()
 	OwnerCharacter = Cast<APawn>(GetOwner());
 }
 
-void UProjectileShooterComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UProjectileShooterComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+                                                FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
+
 	//서버 측의 오소리티 캐릭터일 때만
 	if (OwnerCharacter == nullptr)
 	{
@@ -70,12 +82,17 @@ void UProjectileShooterComponent::TickComponent(float DeltaTime, ELevelTick Tick
 		{
 			//발사 카운터를 증가시키고
 			ShootCounter++;
-			
+
 			//발사 시간을 차감하고
 			ElapsedTimeAfterLastShoot -= ShootRate;
 
 			//페인트 볼을 발사한다
 			FirePaintBall();
+
+			if (OwnerCharacter->GetController()->IsLocalController())
+			{
+				AudioComp->Play();
+			}
 		}
 	}
 }
@@ -104,7 +121,7 @@ void UProjectileShooterComponent::FirePaintBall()
 				}
 			}
 		}
-						
+
 		// 풀링되지 않은 일반 스폰
 		// const auto Temp = GetWorld()->SpawnActor<AProjectileBase>(ProjectileClass, GetComponentTransform());
 		// Temp->ActiveProjectile(GetComponentTransform(), 2000);
@@ -136,5 +153,5 @@ void UProjectileShooterComponent::Server_StartShoot_Implementation()
 
 void UProjectileShooterComponent::Server_StopShoot_Implementation()
 {
-	bIsOnTrigger = false;	
+	bIsOnTrigger = false;
 }

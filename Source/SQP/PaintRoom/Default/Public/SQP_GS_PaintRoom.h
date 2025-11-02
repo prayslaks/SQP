@@ -25,6 +25,7 @@ class SQP_API ASQP_GS_PaintRoom : public ASQPGameState
 
 public:
 	ASQP_GS_PaintRoom();
+	
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	

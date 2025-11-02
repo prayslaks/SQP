@@ -8,15 +8,11 @@
 #include "CompetitorName.h"
 #include "IMGManager.h"
 #include "PaintGameActor.h"
-#include "ReadyActor.h"
-#include "PlaygroundScoreWidget.h"
-#include "SQP.h"
+#include "SFXManager.h"
 #include "SQPPaintWorldSubsystem.h"
-#include "SQP_GM_PaintRoom.h"
-#include "SQP_PaintableActor.h"
 #include "SQP_PC_PaintRoom.h"
-#include "SQP_PS_Master.h"
 #include "SQP_SG_PaintRoom.h"
+#include "Components/AudioComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/PlayerState.h"
@@ -38,6 +34,8 @@ void ASQP_GS_PaintRoom::BeginPlay()
 
 	IMGManager = GetGameInstance()->GetSubsystem<UIMGManager>();
 	if (!IMGManager) return;
+
+	//Multicast_PlayOST1();
 }
 
 void ASQP_GS_PaintRoom::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

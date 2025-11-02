@@ -81,7 +81,7 @@ ASQP_GM_PaintRoom::ASQP_GM_PaintRoom()
 void ASQP_GM_PaintRoom::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	if (UGameplayStatics::GetCurrentLevelName(GetWorld()).Equals(TEXT("CatchMind")))
 	{
 		//액터를 생성한다
