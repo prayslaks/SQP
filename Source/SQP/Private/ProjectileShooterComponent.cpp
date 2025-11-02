@@ -13,7 +13,7 @@
 UProjectileShooterComponent::UProjectileShooterComponent() :
 	bIsOnTrigger(false),
 	ElapsedTimeAfterLastShoot(0),
-	ShootRate(0.2),
+	ShootRate(1),
 	ShootCounter(0),
 	BurstLimiter(-1)
 {
