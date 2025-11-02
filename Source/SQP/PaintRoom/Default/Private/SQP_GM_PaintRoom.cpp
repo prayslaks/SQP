@@ -76,6 +76,14 @@ ASQP_GM_PaintRoom::ASQP_GM_PaintRoom()
 	{
 		CompareActorClass = Finder.Class;
 	}
+
+	//스카이 폰 블루프린트 클래스 로드
+	if (static ConstructorHelpers::FClassFinder<ACompareActor>
+		Finder(TEXT("/Game/Splatoon/Blueprint/BP_SKY.BP_SKY_C"));
+		Finder.Succeeded())
+	{
+		SkyPawnClass = Finder.Class;
+	}
 }
 
 void ASQP_GM_PaintRoom::BeginPlay()
@@ -173,6 +181,7 @@ void ASQP_GM_PaintRoom::PostLogin(APlayerController* NewPlayer)
 void ASQP_GM_PaintRoom::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
 }
 
 void ASQP_GM_PaintRoom::StartCatchMindMiniGame()

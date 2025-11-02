@@ -80,7 +80,7 @@ public:
 	TSubclassOf<UUserWidget> CatchMindWidgetClass;
 
 	//캐치 마인드 위젯
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UCatchMindWidget> CatchMindWidget;
 
 	//컴페티션 위젯 블루프린트 클래스

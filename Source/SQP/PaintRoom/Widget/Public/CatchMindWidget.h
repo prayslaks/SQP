@@ -66,7 +66,7 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<UTextBlock> HintTitleTextBlock;
 	
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(meta=(BindWidget), BlueprintReadOnly)
 	TObjectPtr<UEditableTextBox> AnswerTextBox;
 
 	UPROPERTY(meta=(BindWidget))
