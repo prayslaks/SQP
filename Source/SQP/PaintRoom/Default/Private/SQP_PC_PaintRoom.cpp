@@ -21,6 +21,7 @@
 #include "Components/TextBlock.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "PaintRoom/Widget/Private/PlaygroundMenuWidget.h"
 
 ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 {
@@ -38,6 +39,14 @@ ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 		Finder.Succeeded())
 	{
 		PlaygroundScoreWidgetClass = Finder.Class;
+	}
+
+	//플레이 그라운드 메뉴 위젯 블루프린트 클래스 획득
+	if (static ConstructorHelpers::FClassFinder<UUserWidget>
+		Finder(TEXT("/Game/Splatoon/Blueprint/PaintRoomLevel/WBP_PlaygroundMenu.WBP_PlaygroundMenu_C"));
+		Finder.Succeeded())
+	{
+		PlaygroundMenuWidgetClass = Finder.Class;
 	}
 }
 
@@ -70,8 +79,17 @@ void ASQP_PC_PaintRoom::BeginPlay()
 			if (const auto Casted = Cast<UPlaygroundScoreWidget>(Created))
 			{
 				PlaygroundScoreWidget = Casted;
-				//PlaygroundScoreWidget->SetVisibility(GI->bPlayground ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 				PlaygroundScoreWidget->AddToViewport();
+			}
+		}
+
+		//플레이 그라운드 메뉴 위젯 블루프린트 생성
+		if (const auto Created = CreateWidget(this, PlaygroundMenuWidgetClass))
+		{
+			if (const auto Casted = Cast<UPlaygroundMenuWidget>(Created))
+			{
+				PlaygroundMenuWidget = Casted;
+				PlaygroundMenuWidget->AddToViewport();
 			}
 		}
 
