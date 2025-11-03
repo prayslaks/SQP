@@ -1,7 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SQP_GM_PaintRoom.h"
-
+#include "AISimilarityClient.h"
+#include "CompareActor.h"
 #include "PaintRoomWidget.h"
 #include "SkyViewPawn.h"
 #include "SQP.h"
@@ -12,8 +13,11 @@
 #include "SQP_PC_PaintRoom.h"
 #include "SQP_PS_Master.h"
 #include "SQP_PS_PaintRoomComponent.h"
-#include "TankCharacter.h"
-#include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/Texture2D.h"
+#include "Engine/Engine.h"
+#include "Kismet/KismetRenderingLibrary.h"
+
 
 ASQP_GM_PaintRoom::ASQP_GM_PaintRoom()
 {
@@ -64,38 +68,107 @@ ASQP_GM_PaintRoom::ASQP_GM_PaintRoom()
 	{
 		CatchMindCanvasActorClass = Finder.Class;
 	}
+
+	//경쟁 캔버스 액터 블루프린트 클래스 로드
+	if (static ConstructorHelpers::FClassFinder<ACompareActor>
+		Finder(TEXT("/Game/Splatoon/Blueprint/PaintGaming/BP_Compare.BP_Compare_C"));
+		Finder.Succeeded())
+	{
+		CompareActorClass = Finder.Class;
+	}
+
+	//스카이 폰 블루프린트 클래스 로드
+	if (static ConstructorHelpers::FClassFinder<ACompareActor>
+		Finder(TEXT("/Game/Splatoon/Blueprint/BP_SKY.BP_SKY_C"));
+		Finder.Succeeded())
+	{
+		SkyPawnClass = Finder.Class;
+	}
 }
 
 void ASQP_GM_PaintRoom::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//위젯을 생성한다
-	const auto Created = CreateWidget(GetWorld(), PaintRoomWidgetClass);
-	Created->AddToViewport();
-
-	//액터를 생성한다
-	const auto Spawned = GetWorld()->SpawnActor<ASQP_PaintableActor>(CatchMindCanvasActorClass);
-	Spawned->SetActorLocation(FVector(2200, 0, 700));
-	Spawned->SetActorScale3D(FVector(15, 15, 1));
-	Spawned->SetActorRotation(FRotator(90, 0, 0));
-	CatchMindCanvasActor = Spawned;
-
-	//선택된 페인트 룸 데이터를 로드에 성공했다면
-	if (const auto SaveGame = Cast<USQP_GI>(GetWorld()->GetGameInstance())->LoadSelectedPaintRoomData())
+	if (UGameplayStatics::GetCurrentLevelName(GetWorld()).Equals(TEXT("CatchMind")))
 	{
-		if (USQP_SG_PaintRoom* SG_PaintRoom = Cast<USQP_SG_PaintRoom>(SaveGame))
-		{
-			for (auto Pair : SG_PaintRoom->PEDContainer)
-			{
-				PRINTLOG(TEXT("Successfully Load %s PED... : Length %d"), *Pair.Key.ToString(), Pair.Value.PEDArray.Num());
-			}
-			
-			//서버는 직접 페인트 볼 실행 데이터를 적용한다
-			GetWorld()->GetSubsystem<USQPPaintWorldSubsystem>()->LoadPaintOfWorld(SG_PaintRoom->PEDContainer);
+		//액터를 생성한다
+		const auto Spawned = GetWorld()->SpawnActor<ASQP_PaintableActor>(CatchMindCanvasActorClass);
+		Spawned->SetActorLocation(FVector(2200, 0, 700));
+		Spawned->SetActorScale3D(FVector(15, 15, 1));
+		Spawned->SetActorRotation(FRotator(90, 0, 0));
+		CatchMindCanvasActor = Spawned;
+	}
+	else
+	{
+		//위젯을 생성한다
+		const auto Created = CreateWidget(GetWorld(), PaintRoomWidgetClass);
+		Created->AddToViewport();
 
-			//클라이언트에 전송하기 위핸 PED 배열을 추출해서 할당한다
-			GetGameState<ASQP_GS_PaintRoom>()->PaintExecutionDataSnapshot = SG_PaintRoom->ConstructFullPEDArray();
+		//선택된 페인트 룸 데이터를 로드에 성공했다면
+		if (const auto SaveGame = Cast<USQP_GI>(GetWorld()->GetGameInstance())->LoadSelectedPaintRoomData())
+		{
+			if (USQP_SG_PaintRoom* SG_PaintRoom = Cast<USQP_SG_PaintRoom>(SaveGame))
+			{
+				for (auto Pair : SG_PaintRoom->PEDContainer)
+				{
+					PRINTLOG(TEXT("Successfully Load %s PED... : Length %d"), *Pair.Key.ToString(),
+					         Pair.Value.PEDArray.Num());
+				}
+
+				//서버는 직접 페인트 볼 실행 데이터를 적용한다
+				GetWorld()->GetSubsystem<USQPPaintWorldSubsystem>()->LoadPaintOfWorld(SG_PaintRoom->PEDContainer);
+
+				//클라이언트에 전송하기 위핸 PED 배열을 추출해서 할당한다
+				GetGameState<ASQP_GS_PaintRoom>()->PaintExecutionDataSnapshot = SG_PaintRoom->ConstructFullPEDArray();
+			}
+		}
+	}
+
+	SimilarityClient = GetGameInstance()->GetSubsystem<UAISimilarityClient>();
+
+	if (HasAuthority())
+	{
+		if (const auto GI = GetGameInstance<USQP_GI>(); GI && GI->bHostAsSpectator)
+		{
+			for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+			{
+				APlayerController* PC = It->Get();
+				if (!IsValid(PC)) continue;
+				
+				if (PC->IsLocalController())
+				{
+					// 기존 Pawn 제거
+					if (APawn* OldPawn = PC->GetPawn())
+					{
+						OldPawn->Destroy();
+					}
+
+					if (SpectatorPawnClass)
+					{
+						FActorSpawnParameters Params;
+						Params.Owner = PC;
+						Params.Instigator = nullptr;
+
+						ASkyViewPawn* SpectatorPawn = GetWorld()->SpawnActor<ASkyViewPawn>(
+							SpectatorPawnClass, FVector(0.f, 0.f, 200.f), FRotator::ZeroRotator, Params);
+
+						if (SpectatorPawn)
+						{
+							PC->Possess(SpectatorPawn);
+							UE_LOG(LogTemp, Warning, TEXT("SpectatorPawn spawned and possessed."));
+						}
+						else
+						{
+							UE_LOG(LogTemp, Error, TEXT("Failed to spawn SpectatorPawn."));
+						}
+					}
+					else
+					{
+						UE_LOG(LogTemp, Error, TEXT("SpectatorPawnClass is null!"));
+					}
+				}
+			}
 		}
 	}
 }
@@ -103,20 +176,6 @@ void ASQP_GM_PaintRoom::BeginPlay()
 void ASQP_GM_PaintRoom::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
-	
-	if (HasAuthority() && NewPlayer->IsLocalController())
-	{
-		if (APawn* OldPawn = NewPlayer->GetPawn())
-		{
-			OldPawn->Destroy();
-		}
-		
-		ASkyViewPawn* SpectatorPawn = GetWorld()->SpawnActor<ASkyViewPawn>(ASkyViewPawn::StaticClass(), FVector(0.f, 0.f, 200.f), FRotator(0, 0, 0));
-		if (SpectatorPawn)
-		{
-			NewPlayer->Possess(SpectatorPawn);
-		}
-	}
 }
 
 void ASQP_GM_PaintRoom::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -127,13 +186,14 @@ void ASQP_GM_PaintRoom::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 
 void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 {
+	//이미 캐치 마인드 미니 게임이 진행 중이었다면
 	if (CatchMindMiniGameTimerHandle.IsValid())
 	{
 		return;
 	}
-	
+
 	PRINTLOGNET(TEXT("GM_PaintRoom::StartCatchMindMiniGame"));
-	
+
 	if (const auto GSPaint = GetGameState<ASQP_GS_PaintRoom>())
 	{
 		//편리한 작업을 위해 임시 변수 구축
@@ -143,24 +203,27 @@ void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 			TempPSMasterArray.Emplace(Cast<ASQP_PS_Master>(PS));
 		}
 		TArray<ASQP_PC_PaintRoom*> TempPCPaintArray;
-		for (const auto PS: GSPaint->PlayerArray)
+		for (const auto PS : GSPaint->PlayerArray)
 		{
 			TempPCPaintArray.Emplace(Cast<ASQP_PC_PaintRoom>(PS->GetPlayerController()));
 		}
 		const int32 Size = TempPSMasterArray.Num();
-		
+
 		//이번에 그림을 제시어를 묘사할 캐치마인드 플레이어를 선택
 		const int PainterIdx = FMath::RandRange(1, Size - 1);
 
 		//모든 유저의 페인트 룸 역할을 갱신
 		for (int i = 0; i < Size; i++)
 		{
-			TempPSMasterArray[i]->PaintRoom->PAINT_ROOM_ROLE = (i == PainterIdx ? EPaintRoomRole::CatchMindPainter : EPaintRoomRole::CatchMindParticipant); 
+			TempPSMasterArray[i]->PaintRoom->PAINT_ROOM_ROLE = (i == PainterIdx
+				                                                    ? EPaintRoomRole::CatchMindPainter
+				                                                    : EPaintRoomRole::CatchMindParticipant);
 		}
 
 		//랜덤 제시어를 하나 선택
 		const int32 Rand = FMath::RandRange(1, SuggestionArray.Num());
-		const FCatchMind* Selected = CatchMindMiniGameDataTable->FindRow<FCatchMind>(FName(FString::Printf(TEXT("제시어%d"), Rand)), TEXT(""));
+		const FCatchMind* Selected = CatchMindMiniGameDataTable->FindRow<FCatchMind>(
+			FName(FString::Printf(TEXT("제시어%d"), Rand)), TEXT(""));
 		const FString Hint = Selected->Hint;
 		const FString Suggestion = Selected->Suggestion;
 
@@ -188,29 +251,61 @@ void ASQP_GM_PaintRoom::StartCatchMindMiniGame()
 
 		//제시어 업데이트
 		GSPaint->CATCH_MIND_SUGGESTION = Suggestion;
-		
+
 		//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
-		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::CatchMind;
+		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::CatchMindStart;
 
 		//30초 동안 선택받은 플레이어는 페인트 볼을 쏠 수 있고, 나머지는 정답을 서버에 전송 가능
-		StartTimer(GSPaint, 10.f);
+		StartTimer(GSPaint, 120);
+	}
+}
 
-		GetWorldTimerManager().SetTimer(CatchMindMiniGameTimerHandle, FTimerDelegate::CreateLambda([this]()
+void ASQP_GM_PaintRoom::TimeUpCatchMindMiniGame()
+{
+	GetWorldTimerManager().ClearTimer(CatchMindMiniGameTimerHandle);
+
+	PRINTLOGNET(TEXT("GM_PaintRoom::EndCatchMindMiniGame"));
+
+	if (const auto GSPaint = GetGameState<ASQP_GS_PaintRoom>())
+	{
+		//GS의 PS를 PS_Master로 변환해서 임시 저장
+		TArray<ASQP_PS_Master*> TempPSMasterArray;
+		for (const auto PS : GSPaint->PlayerArray)
 		{
-			EndCatchMindMiniGame();
-		}), 10, false);
+			TempPSMasterArray.Emplace(Cast<ASQP_PS_Master>(PS));
+		}
+		const int32 Size = TempPSMasterArray.Num();
+
+		//모든 유저가 페인트 볼을 발사할 수 있도록 초기화
+		for (int i = 0; i < Size; i++)
+		{
+			TempPSMasterArray[i]->PaintRoom->PAINT_ROOM_ROLE = EPaintRoomRole::None;
+		}
+
+		//제시어 초기화
+		GSPaint->CATCH_MIND_SUGGESTION = FString();
+
+		//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
+		GSPaint->PAINT_ROOM_STATE = EPaintRoomState::CatchMindTimeUp;
+
+		FTimerHandle TimerHandle;
+		GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([this, GSPaint]()
+		{
+			//모든 클라이언트가 알 수 있도록 게임 스테이트의 변수를 변경
+			GSPaint->PAINT_ROOM_STATE = EPaintRoomState::None;
+
+			//캐치 마인드를 위한 캔버스를 초기화
+			CatchMindCanvasActor->ClearPaint();
+		}), 5, false);
 	}
 }
 
 void ASQP_GM_PaintRoom::EndCatchMindMiniGame()
 {
-	if (CatchMindMiniGameTimerHandle.IsValid())
-	{
-		CatchMindMiniGameTimerHandle.Invalidate();
-	}
-	
+	GetWorldTimerManager().ClearTimer(CatchMindMiniGameTimerHandle);
+
 	PRINTLOGNET(TEXT("GM_PaintRoom::EndCatchMindMiniGame"));
-	
+
 	if (const auto GSPaint = GetGameState<ASQP_GS_PaintRoom>())
 	{
 		//GS의 PS를 PS_Master로 변환해서 임시 저장
@@ -251,7 +346,7 @@ void ASQP_GM_PaintRoom::EndCatchMindMiniGame()
 	}
 }
 
-void ASQP_GM_PaintRoom::StartTimer(ASQP_GS_PaintRoom* GS, float Time)
+void ASQP_GM_PaintRoom::StartTimer(ASQP_GS_PaintRoom* GS, const float Time) const
 {
 	GS->CountdownStartTime = GetWorld()->GetTimeSeconds();
 	GS->CountdownTotalTime = Time;
@@ -260,5 +355,147 @@ void ASQP_GM_PaintRoom::StartTimer(ASQP_GS_PaintRoom* GS, float Time)
 
 void ASQP_GM_PaintRoom::StartCompetitionMiniGame()
 {
-	
+	if (bIsCompetition)
+		return;
+	bIsCompetition = true;
+
+	ASQP_GS_PaintRoom* GSPaint = GetGameState<ASQP_GS_PaintRoom>();
+	if (!GSPaint)
+		return;
+
+	GSPaint->PAINT_ROOM_STATE = EPaintRoomState::DrawingCompetition;
+
+	for (APlayerState* PS : GSPaint->PlayerArray)
+	{
+		APlayerController* PC = Cast<APlayerController>(PS->GetOwner());
+
+		if (PC->IsLocalController())
+		{
+			continue;
+		}
+
+
+		PlayerNames.Add(PS->GetPlayerName());
+	}
+
+	int32 TotalPlayers = PlayerNames.Num();
+	CompareTextures.SetNum(TotalPlayers);
+
+	// 스폰 Canvas
+	SpawnActorsInCircle(CompareActorClass, TotalPlayers, 1470.f, FVector(0.f, 0.f, 300.f));
+
+	// 문제 그림 표시
+	GSPaint->StartGame();
+
+	// 게임 시작
+	StartTimer(GSPaint, 120.f);
+}
+
+void ASQP_GM_PaintRoom::EndCompetitionMiniGame()
+{
+	ASQP_GS_PaintRoom* GSPaint = GetGameState<ASQP_GS_PaintRoom>();
+	GSPaint->PAINT_ROOM_STATE = EPaintRoomState::None;
+	for (int32 i = 0; i < PaintableCompareActors.Num(); i++)
+	{
+		PlayerNames[i] = PaintableCompareActors[i]->CompetitionPlayerName;
+		UTexture* CompareImage;
+		PaintableCompareActors[i]->FindComponentByClass<UStaticMeshComponent>()->GetMaterial(0)->
+		                           GetTextureParameterValue(TEXT("ColorRenderTarget"), CompareImage);
+		UTextureRenderTarget2D* RT = Cast<UTextureRenderTarget2D>(CompareImage);
+		CompareTextures[i] = ConvertRenderTargetToTexture2D(RT);
+		if (!CompareTextures[i])
+		{
+			CompareTextures[i] = LoadObject<UTexture2D>(
+				nullptr, TEXT("/Engine/EngineResources/WhiteSquareTexture.WhiteSquareTexture"));
+		}
+		if (CompareTextures[i])
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CompareImage: %s (%s)"),
+			       *CompareTextures[i]->GetName(),
+			       *CompareTextures[i]->GetPathName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("CompareImage is NULL"));
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("%d"), PlayerNames.Num());
+	UE_LOG(LogTemp, Warning, TEXT("%d"), CompareTextures.Num());
+
+	SimilarityClient->CompareTextures(GSPaint->RandomImage, CompareTextures, PlayerNames);
+
+	PRINTLOGNET(TEXT("EndCompetitionMiniGame"));
+
+	InitCompetition();
+}
+
+
+void ASQP_GM_PaintRoom::SpawnActorsInCircle(const TSubclassOf<ACompareActor> ActorClass, const int32 NumActors,
+                                            const float Radius, const FVector& Center)
+{
+	if (!ActorClass || NumActors <= 0)
+		return;
+
+	UWorld* World = GetWorld();
+	if (!World)
+		return;
+
+	const float GapDegrees = 60.f;
+	const float GapRadians = FMath::DegreesToRadians(GapDegrees);
+	const float StartAngle = PI / 2 + (GapRadians / 2);
+	const float FillRadians = 2 * PI - GapRadians;
+
+	for (int32 i = 0; i < NumActors; ++i)
+	{
+		const float Angle = StartAngle + FillRadians / (NumActors - 1) * i;
+		FVector Pos = Center + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0) * Radius;
+		FRotator Rot = (Center - Pos).Rotation();
+
+		ACompareActor* PaintableActor = World->SpawnActor<ACompareActor>(ActorClass, Pos, Rot);
+		float R = FMath::FRandRange(0.3f, 1.0f);
+		float G = FMath::FRandRange(0.3f, 1.0f);
+		float B = FMath::FRandRange(0.3f, 1.0f);
+		FLinearColor RandomColor(R, G, B, 1.0f);
+		GetGameState<ASQP_GS_PaintRoom>()->MultiCast_SetSpawnActorText(PaintableActor, PlayerNames[i], RandomColor);
+
+		PaintableCompareActors.Add(PaintableActor);
+	}
+}
+
+
+void ASQP_GM_PaintRoom::InitCompetition()
+{
+	PlayerNames.Empty();
+	CompareTextures.Empty();
+	for (ACompareActor* Actor : PaintableCompareActors)
+	{
+		Actor->Destroy();
+	}
+	PaintableCompareActors.Empty();
+	bIsCompetition = false;
+}
+
+UTexture2D* ASQP_GM_PaintRoom::ConvertRenderTargetToTexture2D(UTextureRenderTarget2D* RenderTarget)
+{
+	if (!RenderTarget) return nullptr;
+
+	FTextureRenderTargetResource* RTResource = RenderTarget->GameThread_GetRenderTargetResource();
+	FReadSurfaceDataFlags ReadPixelFlags(RCM_UNorm);
+	ReadPixelFlags.SetLinearToGamma(false);
+
+	TArray<FColor> OutBMP;
+	RTResource->ReadPixels(OutBMP, ReadPixelFlags);
+
+	int32 Width = RenderTarget->SizeX;
+	int32 Height = RenderTarget->SizeY;
+
+	UTexture2D* NewTexture = UTexture2D::CreateTransient(Width, Height, PF_B8G8R8A8);
+	if (!NewTexture) return nullptr;
+
+	void* TextureData = NewTexture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+	FMemory::Memcpy(TextureData, OutBMP.GetData(), OutBMP.Num() * sizeof(FColor));
+	NewTexture->GetPlatformData()->Mips[0].BulkData.Unlock();
+
+	NewTexture->UpdateResource();
+	return NewTexture;
 }

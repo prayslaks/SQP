@@ -4,10 +4,17 @@
 #include "SQP_GS_PaintRoom.h"
 
 #include "CatchMindWidget.h"
+#include "CompareActor.h"
+#include "CompetitorName.h"
+#include "IMGManager.h"
+#include "PaintGameActor.h"
 #include "SQPPaintWorldSubsystem.h"
 #include "SQP_PC_PaintRoom.h"
 #include "SQP_SG_PaintRoom.h"
+#include "Components/TextBlock.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/PlayerState.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 ASQP_GS_PaintRoom::ASQP_GS_PaintRoom()
@@ -20,31 +27,11 @@ void ASQP_GS_PaintRoom::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (HasAuthority())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Server GameState BeginPlay: Player count = %d"), PlayerArray.Num());
-	}
-	else
-	{
-		// 클라이언트는 복제 지연이 있으므로 타이머로 나중에 확인
-		FTimerHandle TimerHandle;
-		GetWorldTimerManager().SetTimer(TimerHandle, [this]()
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Client GameState: Player count = %d"), PlayerArray.Num());
-			for (APlayerState* PlayerState : PlayerArray)
-			{
-				if (PlayerState)
-				{
-					FString PlayerName = PlayerState->GetPlayerName();
-					UE_LOG(LogTemp, Warning, TEXT("Player: %s"), *PlayerName);
-			
-					UE_LOG(LogTemp, Warning, TEXT("PlayerState: %s"), *PlayerState->GetName());
-				}
-			}
-		}, 5, false);
-	}
-	
-	//Multicast_AddPlayerTexture(, nullptr);
+	PaintGameActor = Cast<APaintGameActor>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), APaintGameActor::StaticClass()));
+
+	IMGManager = GetGameInstance()->GetSubsystem<UIMGManager>();
+	if (!IMGManager) return;
 }
 
 void ASQP_GS_PaintRoom::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -66,13 +53,13 @@ void ASQP_GS_PaintRoom::OnRep_PaintExecutionDataSnapshot()
 	{
 		return;
 	}
-	
+
 	//최초 리플리케이션 이후에는 적용 거부
 	if (bHasInitialPaintDataBeenApplied)
 	{
 		return;
 	}
-	
+
 	//스냅샷 이후에는 리플리케이션 비활성화
 	bHasInitialPaintDataBeenApplied = true;
 
@@ -87,6 +74,15 @@ void ASQP_GS_PaintRoom::OnRep_PaintExecutionDataSnapshot()
 	if (const auto Subsystem = GetWorld()->GetSubsystem<USQPPaintWorldSubsystem>())
 	{
 		Subsystem->LoadPaintOfWorld(PEDContainer);
+	}
+}
+
+void ASQP_GS_PaintRoom::StartGame()
+{
+	UE_LOG(LogTemp, Warning, TEXT("ASQP_GS_PaintRoom::StartCompetitionGame"));
+	if (HasAuthority())
+	{
+		Multicast_SetRandomImage(IMGManager->GetRandomImage());
 	}
 }
 
@@ -105,15 +101,11 @@ void ASQP_GS_PaintRoom::Multicast_BroadcastSomeoneWin_Implementation(APlayerStat
 	}
 }
 
-bool ASQP_GS_PaintRoom::CheckCatchMindAnswer(const FString& OtherAnswer)
+bool ASQP_GS_PaintRoom::CheckCatchMindAnswer(const FString& OtherAnswer) const
 {
 	return CatchMindSuggestion.Equals(OtherAnswer);
 }
 
-void ASQP_GS_PaintRoom::Multicast_AddPlayerTexture_Implementation(const FString& PlayerName, UTexture2D* Texture)
-{
-	PlayerTextureMap.Add(PlayerName, Texture);
-}
 
 void ASQP_GS_PaintRoom::OnRep_PaintRoomState()
 {
@@ -127,7 +119,16 @@ void ASQP_GS_PaintRoom::OnRep_PaintRoomState()
 				PCPaint->CatchMindWidget->HideAll();
 				break;
 			}
-		case EPaintRoomState::CatchMind:
+		case EPaintRoomState::CatchMindStart:
+			{
+				break;
+			}
+		case EPaintRoomState::CatchMindTimeUp:
+			{
+				PCPaint->CatchMindWidget->ShowTimeUp();
+				break;
+			}
+		case EPaintRoomState::DrawingCompetition:
 			{
 				break;
 			}
@@ -135,11 +136,29 @@ void ASQP_GS_PaintRoom::OnRep_PaintRoomState()
 			{
 				break;
 			};
-		}	
+		}
 	}
 }
 
 void ASQP_GS_PaintRoom::Multicast_SetRandomImage_Implementation(UTexture2D* Image)
 {
 	RandomImage = Image;
+	PaintGameActor->ShowRandomImage(Image);
+}
+
+void ASQP_GS_PaintRoom::MultiCast_SetSpawnActorText_Implementation(ACompareActor* PaintableActor, const FString& Name, FLinearColor Color)
+{
+	if (!PaintableActor)
+		return;
+
+	PaintableActor->CompetitionPlayerName = Name;
+
+	if (!PaintableActor->GetComponentByClass<UWidgetComponent>())
+		return;
+
+	UCompetitorName* NameUI = Cast<UCompetitorName>(
+		PaintableActor->GetComponentByClass<UWidgetComponent>()->GetWidget());
+	NameUI->CompetitorName->SetText(FText(FText::FromString(PaintableActor->CompetitionPlayerName)));
+	
+	NameUI->CompetitorName->SetColorAndOpacity(FSlateColor(Color));
 }

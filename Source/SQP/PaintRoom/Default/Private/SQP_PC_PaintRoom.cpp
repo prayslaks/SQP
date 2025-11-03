@@ -2,10 +2,11 @@
 
 
 #include "PaintRoom/Default/Public/SQP_PC_PaintRoom.h"
-
 #include "CatchMindWidget.h"
-#include "SkyViewPawn.h"
+#include "CompetitionWidget.h"
+#include "PlaygroundScoreWidget.h"
 #include "SQP.h"
+#include "SQP_GI.h"
 #include "SQP_GM_PaintRoom.h"
 #include "SQP_GS_PaintRoom.h"
 #include "SQP_PS_Master.h"
@@ -14,11 +15,11 @@
 #include "TimerUI.h"
 #include "UIManager.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/CapsuleComponent.h"
+#include "Components/Image.h"
 #include "Components/RichTextBlock.h"
-#include "Components/TextBlock.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "PlaygroundMenuWidget.h"
+#include "Components/AudioComponent.h"
 
 ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 {
@@ -29,28 +30,58 @@ ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 	{
 		CatchMindWidgetClass = Finder.Class;
 	}
-}
 
-void ASQP_PC_PaintRoom::Server_PaintColorChange_Implementation(const FLinearColor Value)
-{
-	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, TEXT("PaintColorChange!"));
-	GetPlayerState<ASQP_PS_Master>()->PaintRoom->SelectedColor = Value;
-}
+	//플레이 그라운드 위젯 블루프린트 클래스 획득
+	if (static ConstructorHelpers::FClassFinder<UUserWidget>
+		Finder(TEXT("/Game/Splatoon/Blueprint/PaintRoomLevel/WBP_PlaygroundScore.WBP_PlaygroundScore_C"));
+		Finder.Succeeded())
+	{
+		PlaygroundScoreWidgetClass = Finder.Class;
+	}
 
-void ASQP_PC_PaintRoom::Server_ChangeBrushSize_Implementation(const float Value)
-{
-	GetPlayerState<ASQP_PS_Master>()->PaintRoom->SelectedBrushSize = Value;
-}
+	bReplicates = true;
 
-void ASQP_PC_PaintRoom::Server_UpdateLikes_Implementation(const int32 LikeNum)
-{
-	GetPlayerState<ASQP_PS_Master>()->PaintRoom->LikeCounter = LikeNum;
+	//플레이 그라운드 메뉴 위젯 블루프린트 클래스 획득
+	if (static ConstructorHelpers::FClassFinder<UUserWidget>
+		Finder(TEXT("/Game/Splatoon/Blueprint/PaintRoomLevel/WBP_PlaygroundMenu.WBP_PlaygroundMenu_C"));
+		Finder.Succeeded())
+	{
+		PlaygroundMenuWidgetClass = Finder.Class;
+	}
+
+	//컴페티션 위젯 블루프린트 클래스 획득
+	if (static ConstructorHelpers::FClassFinder<UUserWidget>
+		Finder(TEXT("/Game/Splatoon/Blueprint/PaintRoomLevel/WBP_Competition.WBP_Competition_C"));
+		Finder.Succeeded())
+	{
+		CompetitionWidgetClass = Finder.Class;
+	}
+
+	AudioComp1 = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp1"));
+	AudioComp2 = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp2"));
+	AudioComp1->bAutoActivate = false;
+	AudioComp2->bAutoActivate = false;
+	
+	if (static ConstructorHelpers::FObjectFinder<USoundWave> USoundWave1(
+			TEXT("/Game/Assets/Sounds/OST/Spray_Paint_Dreams-1.Spray_Paint_Dreams-1"));
+		USoundWave1.Succeeded())
+	{
+		AudioComp1->SetSound(USoundWave1.Object);
+	}
+	
+	if (static ConstructorHelpers::FObjectFinder<USoundWave> USoundWave2(
+			TEXT("/Game/Assets/Sounds/OST/Spray_Paint_Dreams-2.Spray_Paint_Dreams-2"));
+		USoundWave2.Succeeded())
+	{
+		AudioComp2->SetSound(USoundWave2.Object);
+	}
 }
 
 void ASQP_PC_PaintRoom::BeginPlay()
 {
 	Super::BeginPlay();
 
+	GI = Cast<USQP_GI>(GetGameInstance());
 	GM = Cast<ASQP_GM_PaintRoom>(UGameplayStatics::GetGameMode(GetWorld()));
 	GS = Cast<ASQP_GS_PaintRoom>(UGameplayStatics::GetGameState(this));
 	PS = Cast<ASQP_PS_Master>(PlayerState);
@@ -68,7 +99,69 @@ void ASQP_PC_PaintRoom::BeginPlay()
 				CatchMindWidget->AddToViewport();
 			}
 		}
+
+		//컴페티션 위젯 블루프린트 생성
+		if (const auto Created = CreateWidget(this, CompetitionWidgetClass))
+		{
+			if (const auto Casted = Cast<UCompetitionWidget>(Created))
+			{
+				CompetitionWidget = Casted;
+				CompetitionWidget->HideAll();
+				CompetitionWidget->AddToViewport();
+			}
+		}
+
+		//플레이그라운드 스코어 위젯 블루프린트 생성
+		if (const auto Created = CreateWidget(this, PlaygroundScoreWidgetClass))
+		{
+			if (const auto Casted = Cast<UPlaygroundScoreWidget>(Created))
+			{
+				PlaygroundScoreWidget = Casted;
+				PlaygroundScoreWidget->AddToViewport();
+			}
+		}
+
+		//플레이 그라운드 메뉴 위젯 블루프린트 생성
+		if (const auto Created = CreateWidget(this, PlaygroundMenuWidgetClass))
+		{
+			if (const auto Casted = Cast<UPlaygroundMenuWidget>(Created))
+			{
+				PlaygroundMenuWidget = Casted;
+				PlaygroundMenuWidget->AddToViewport();
+			}
+		}
+
+		//타이머 UI 생성
 		TimerUI = UIManager->CreateTimerUI();
+		TimerUI->TimerRichTextBlock->SetVisibility(ESlateVisibility::Hidden);
+		TimerUI->ReferImage->SetVisibility(ESlateVisibility::Hidden);
+
+		AudioComp1->Play();
+		if (AudioComp1)
+		{
+			AudioComp1->OnAudioFinished.AddDynamic(this, &ASQP_PC_PaintRoom::OnOST1Finished);
+		}
+		if (AudioComp2)
+		{
+			AudioComp2->OnAudioFinished.AddDynamic(this, &ASQP_PC_PaintRoom::OnOST2Finished);
+		}
+		
+	}
+}
+
+void ASQP_PC_PaintRoom::OnOST1Finished()
+{
+	if (IsLocalController())
+	{
+		AudioComp2->Play();
+	}
+}
+
+void ASQP_PC_PaintRoom::OnOST2Finished()
+{
+	if (IsLocalController())
+	{
+		AudioComp1->Play();
 	}
 }
 
@@ -86,6 +179,23 @@ void ASQP_PC_PaintRoom::Tick(float DeltaSeconds)
 }
 
 
+void ASQP_PC_PaintRoom::Server_PaintColorChange_Implementation(const FLinearColor Value)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, TEXT("PaintColorChange!"));
+	GetPlayerState<ASQP_PS_Master>()->PaintRoom->SelectedColor = Value;
+}
+
+void ASQP_PC_PaintRoom::Server_ChangeBrushSize_Implementation(const float Value)
+{
+	GetPlayerState<ASQP_PS_Master>()->PaintRoom->SelectedBrushSize = Value;
+}
+
+void ASQP_PC_PaintRoom::Server_UpdateLikes_Implementation(const int32 LikeNum)
+{
+	GetPlayerState<ASQP_PS_Master>()->PaintRoom->LikeCounter = LikeNum;
+}
+
+
 void ASQP_PC_PaintRoom::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
@@ -95,6 +205,7 @@ void ASQP_PC_PaintRoom::OnPossess(APawn* InPawn)
 		DynMat = player->GetMesh()->CreateAndSetMaterialInstanceDynamic(0);
 	}
 }
+
 
 void ASQP_PC_PaintRoom::Client_NotifyAnswerIsWrong_Implementation()
 {
@@ -131,7 +242,9 @@ void ASQP_PC_PaintRoom::Server_ReceiveCatchMindAnswer_Implementation(const FStri
 			}
 
 			//클라이언트들에 정답 사실을 전파
-			GS->Multicast_BroadcastSomeoneWin(GetPlayerState<ASQP_PS_Master>());
+			const auto WinnerPS = GetPlayerState<ASQP_PS_Master>();
+			WinnerPS->SCORE += 10;
+			GS->Multicast_BroadcastSomeoneWin(WinnerPS);
 		}
 		else
 		{
@@ -164,6 +277,16 @@ void ASQP_PC_PaintRoom::ReplicatedCountDown()
 		RemainingTime = FMath::CeilToInt(Remaining);
 		if (RemainingTime != LastRemainingTime)
 		{
+			if (IsLocalController())
+			{
+				TimerUI->TimerRichTextBlock->SetVisibility(ESlateVisibility::Visible);
+				if (GS->PAINT_ROOM_STATE == EPaintRoomState::DrawingCompetition)
+				{
+					TimerUI->ReferImage->SetVisibility(ESlateVisibility::Visible);
+					TimerUI->ReferImage->SetBrushFromTexture(GS->RandomImage);
+				}
+			}
+
 			UpdateCountdownUI(RemainingTime, TimerUI);
 			LastRemainingTime = RemainingTime;
 		}
@@ -172,9 +295,21 @@ void ASQP_PC_PaintRoom::ReplicatedCountDown()
 			Remaining = 0.f;
 			GS->bOnCountdown = false;
 			LastRemainingTime = -1;
+			if (IsLocalController())
+			{
+				TimerUI->TimerRichTextBlock->SetVisibility(ESlateVisibility::Hidden);
+				TimerUI->ReferImage->SetVisibility(ESlateVisibility::Hidden);
+			}
 			if (HasAuthority())
 			{
-				GM->EndCatchMindMiniGame();
+				if (GM->bIsCompetition)
+				{
+					GM->EndCompetitionMiniGame();
+				}
+				else
+				{
+					GM->TimeUpCatchMindMiniGame();
+				}
 			}
 		}
 	}

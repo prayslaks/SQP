@@ -119,6 +119,7 @@ void USQPPaintWorldSubsystem::GetRenderTargetFromHit(
 	}
 
 	//충돌 컴포넌트에서 머터리얼 인터페이스 획득
+	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Red, FString::Printf(TEXT("%s"), *Hit.Component->GetOwner()->GetActorNameOrLabel()));
 	const auto MaterialInterface = Hit.Component->GetMaterialFromCollisionFaceIndex(Hit.FaceIndex, SectionIndex);
 
 	if (MaterialInterface == nullptr)
@@ -263,7 +264,8 @@ void USQPPaintWorldSubsystem::ClearPaint(AActor* Target)
 					if (CreatedNormalRenderTarget)
 					{
 						CreatedNormalRenderTarget->CompressionSettings = TC_VectorDisplacementmap;
-						CreatedNormalRenderTarget->MipGenSettings = TMGS_NoMipmaps;
+						//CreatedNormalRenderTarget->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
+						CreatedNormalRenderTarget->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
 						CreatedNormalRenderTarget->UpdateResource();
 						CreatedNormalRenderTarget->SRGB = false;
 					}
@@ -525,7 +527,8 @@ void USQPPaintWorldSubsystem::CreateCanvasMaterialInstanceDynamic(
 	if (CreatedNormalRenderTarget)
 	{
 		CreatedNormalRenderTarget->CompressionSettings = TC_VectorDisplacementmap;
-		CreatedNormalRenderTarget->MipGenSettings = TMGS_NoMipmaps;
+		//CreatedNormalRenderTarget->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
+		CreatedNormalRenderTarget->MipLoadOptions = ETextureMipLoadOptions::OnlyFirstMip;
 		CreatedNormalRenderTarget->UpdateResource();
 		CreatedNormalRenderTarget->SRGB = false;
 	}

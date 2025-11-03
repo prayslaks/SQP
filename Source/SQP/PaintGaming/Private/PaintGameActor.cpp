@@ -3,13 +3,9 @@
 
 #include "PaintGaming/Public/PaintGameActor.h"
 
-#include "IMGManager.h"
-#include "MainUI.h"
 #include "MainUIComponent.h"
-#include "ReadyActor.h"
 #include "SQP_GS_PaintRoom.h"
 #include "TankCharacter.h"
-#include "Components/RichTextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -28,17 +24,16 @@ void APaintGameActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AReadyActor* ReadyActor = Cast<AReadyActor>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), AReadyActor::StaticClass()));
-
-	ReadyActor->OnTimerFinished.BindUObject(this, &APaintGameActor::StartGameTimer);
-
-	IMGManager = GetGameInstance()->GetSubsystem<UIMGManager>();
-	if (!IMGManager) return;
-	
 	DynMat = FindComponentByClass<UStaticMeshComponent>()->CreateAndSetMaterialInstanceDynamic(0);
 
 	GS = Cast<ASQP_GS_PaintRoom>(UGameplayStatics::GetGameState(GetWorld()));
+}
+
+void APaintGameActor::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APaintGameActor, ElapsedRot)
 }
 
 
@@ -54,26 +49,16 @@ void APaintGameActor::ShowRandomImage(UTexture2D* Image)
 void APaintGameActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
-
-void APaintGameActor::StartGameTimer()
-{
-	StartTime = 10;
 
 	if (HasAuthority())
 	{
-		GS->Multicast_SetRandomImage(IMGManager->GetRandomImage());
+		ElapsedRot += 0.8f;
+		if (ElapsedRot >= 360.0f)
+		{
+			ElapsedRot = 0.f;
+		}
 	}
-
-	ShowRandomImage(GS->RandomImage);
-	
-	GetWorld()->GetTimerManager().SetTimer(
-		StartTimer,
-		this,
-		&APaintGameActor::CountDown,
-		1.0f,
-		true
-	);
+	SetActorRotation(FRotator(0, ElapsedRot, 0));
 }
 
 void APaintGameActor::CountDown()
@@ -98,7 +83,7 @@ void APaintGameActor::CountDownText()
 		{
 			if (UMainUIComponent* MainUIComp = TankPlayer->FindComponentByClass<UMainUIComponent>())
 			{
-				MainUIComp->MainUI->TimerRichTextBlock->SetText(FText::FromString(RichText));
+				//MainUIComp->MainUI->TimerRichTextBlock->SetText(FText::FromString(RichText));
 			}
 		}
 	}

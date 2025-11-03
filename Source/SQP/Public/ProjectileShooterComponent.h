@@ -83,4 +83,7 @@ protected:
 	//트리거 당 발사할 수 있는 최대 개수
 	UPROPERTY(VisibleAnywhere)
 	int32 BurstLimiter;
+
+	UPROPERTY()
+	TObjectPtr<UAudioComponent> AudioComp;
 };

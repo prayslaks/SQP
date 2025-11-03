@@ -2,12 +2,6 @@
 
 
 #include "ReadyActor.h"
-
-#include "MainUI.h"
-#include "MainUIComponent.h"
-#include "TankCharacter.h"
-#include "Components/RichTextBlock.h"
-#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -24,14 +18,23 @@ AReadyActor::AReadyActor()
 void AReadyActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	StaticMeshComp = FindComponentByClass<UStaticMeshComponent>();
+	StaticMeshComp->OnComponentBeginOverlap.AddDynamic(this, &AReadyActor::OnOverLap);
+	DynMat = StaticMeshComp->CreateAndSetMaterialInstanceDynamic(0);
 	
+	// convert start angle to radians
+	CurrentAngleRad = FMath::DegreesToRadians(StartAngleDeg);
+	// if Radius is zero, keep at center (but still can face center)
 }
 
 void AReadyActor::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AReadyActor, ReadyPlayerState)
+	DOREPLIFETIME(AReadyActor, AngularSpeedDeg);
+	DOREPLIFETIME(AReadyActor, bIsHit);
+	DOREPLIFETIME(AReadyActor, ElapsedTime);
 }
 
 // Called every frame
@@ -39,61 +42,59 @@ void AReadyActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (ReadyPlayerState.Num() > 1)
+	// update angle
+	float AngularSpeedRad = FMath::DegreesToRadians(AngularSpeedDeg);
+	CurrentAngleRad += AngularSpeedRad * DeltaTime;
+
+	// compute new position in XY plane
+	float X = OrbitCenter.X + FMath::Cos(CurrentAngleRad) * Radius;
+	float Y = OrbitCenter.Y + FMath::Sin(CurrentAngleRad) * Radius;
+	float Z = FixedZ + OrbitCenter.Z;
+
+	FVector NewLocation(X, Y, Z);
+	SetActorLocation(NewLocation);
+
+	if (bFaceCenter)
 	{
-		// TODO: 렌더타겟2D 초기화
-		// ClearRenderTarget2D
-		// TODO: 추후 bReady, visibility, ReadyPlayerState 초기화
-
-		if (bIsReady)
-			return;
-
-		bIsReady = true;
-
-		if (bIsReady)
+		FVector Direction = (OrbitCenter - NewLocation); // points from actor -> center
+		if (!Direction.IsNearlyZero())
 		{
-			StartReadyTimer();
-		}
-	}
-}
-
-void AReadyActor::StartReadyTimer()
-{
-	ReadyTime = 3;
-
-	GetWorld()->GetTimerManager().SetTimer(
-		ReadyTimer,
-		this,
-		&AReadyActor::CountDown,
-		1.0f,
-		true
-	);
-}
-
-void AReadyActor::CountDown()
-{
-	if (ReadyTime < 0)
-	{
-		GetWorld()->GetTimerManager().ClearTimer(ReadyTimer);
-		OnTimerFinished.Execute();
-		return;
-	}
-	CountDownText();
-	ReadyTime--;
-}
-
-void AReadyActor::CountDownText()
-{
-	FString RichText = FString::Printf(TEXT("<Timer>%d</>"), ReadyTime);
-	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
-	if (PC && PC->IsLocalController())
-	{
-		if (ATankCharacter* TankPlayer = Cast<ATankCharacter>(PC->GetPawn()))
-		{
-			if (UMainUIComponent* MainUIComp = TankPlayer->FindComponentByClass<UMainUIComponent>())
+			FRotator LookRot = Direction.Rotation(); // full rotation (pitch,yaw,roll=0)
+			if (bOnlyYaw)
 			{
-				MainUIComp->MainUI->TimerRichTextBlock->SetText(FText::FromString(RichText));
+				// Keep only yaw, zero pitch & roll
+				FRotator Current = GetActorRotation();
+				LookRot.Pitch = 0.f;
+				LookRot.Roll = 0.f;
+				// optionally preserve current pitch if wanted: LookRot.Pitch = Current.Pitch;
 			}
+			SetActorRotation(LookRot);
 		}
+	}
+
+	if (bIsHit)
+	{
+		ElapsedTime += DeltaTime;
+		DynMat->SetTextureParameterValue(FName("Emotion"), Headache);
+		if (ElapsedTime >= 6.0f)
+		{
+			bIsHit = false;
+			AngularSpeedDeg = 20.f;
+		}
+	}
+	else
+	{
+		DynMat->SetTextureParameterValue(FName("Emotion"), ThumbsUp);
+	}
+}
+
+void AReadyActor::OnOverLap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (HasAuthority())
+	{
+		ElapsedTime = 0.f;
+		AngularSpeedDeg = 75.f;
+		bIsHit = true;
 	}
 }

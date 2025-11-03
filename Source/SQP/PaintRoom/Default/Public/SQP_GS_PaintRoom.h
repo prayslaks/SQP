@@ -6,14 +6,16 @@
 #include "SQPGameState.h"
 #include "SQP_GS_PaintRoom.generated.h"
 
+class ASQP_PS_Master;
 struct FPaintExecutionData;
 
 UENUM(BlueprintType)
 enum class EPaintRoomState : uint8
 {
 	None = 0,
-	CatchMind = 1,
-	DrawingCompetition = 2,
+	CatchMindStart = 1,
+	CatchMindTimeUp = 2,
+	DrawingCompetition = 3,
 };
 
 UCLASS()
@@ -23,9 +25,10 @@ class SQP_API ASQP_GS_PaintRoom : public ASQPGameState
 
 public:
 	ASQP_GS_PaintRoom();
+	
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
+	
 	//서버로부터 PED 배열을 최초 1회만 전달받는다
 	UPROPERTY(ReplicatedUsing = OnRep_PaintExecutionDataSnapshot)
 	TArray<FPaintExecutionData> PaintExecutionDataSnapshot;
@@ -38,27 +41,21 @@ public:
 	bool bHasInitialPaintDataBeenApplied = false;
 
 	UPROPERTY()
+	TObjectPtr<class APaintGameActor> PaintGameActor;
+	UPROPERTY()
+	TObjectPtr<class UIMGManager> IMGManager;
+	void StartGame();
+	
+	UPROPERTY()
 	TObjectPtr<UTexture2D> RandomImage;
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SetRandomImage(UTexture2D* Image);
-
-	UPROPERTY()
-	TMap<FString, UTexture2D*> PlayerTextureMap;
-	UPROPERTY()
-	TArray<UTexture2D*> ComparisonTextures;
-	TArray<FString> PlayerNames;
-
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_AddPlayerTexture(const FString& PlayerName, UTexture2D* Texture);
 
 	// for (const auto& Pair : PlayerTextureMap)
 	// {
 	// 	PlayerNames.Add(Pair.Key);
 	// 	ComparisonTextures.Add(Pair.Value);
 	// }
-	//
-	// UAISimilarityClient* AIClient = GetGameInstance()->GetSubsystem<UAISimilarityClient>();
-	// AIClient->CompareTextures(Original, ComparisonTextures, PlayerNames);
 
 	//캐치마인드 정답자에 대해 전파하는 메서드
 	UFUNCTION(NetMulticast, Reliable)
@@ -87,7 +84,7 @@ public:
 
 	//캐치 마인드 정답을 확인해주는 메서드
 	UFUNCTION()
-	bool CheckCatchMindAnswer(const FString& OtherAnswer);
+	bool CheckCatchMindAnswer(const FString& OtherAnswer) const;
 
 protected:
 	//페인트 룸의 상태
@@ -109,4 +106,7 @@ public:
 	//캐치 마인드 제시어
 	UPROPERTY(VisibleAnywhere)
 	FString CatchMindSuggestion;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiCast_SetSpawnActorText(class ACompareActor* PaintableActor, const FString& Name, FLinearColor Color);
 };

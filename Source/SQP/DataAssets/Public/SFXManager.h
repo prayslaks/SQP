@@ -31,14 +31,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Sound")
 	void StopSound2D(const ESFXType Type);
-	
+
+	UPROPERTY()
+	TMap<ESFXType, UAudioComponent*> ActiveSounds;
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Sound", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USFXDataAsset> SoundAsset;
 	
 	UPROPERTY(EditAnywhere, Category = "Sound")
 	TMap<ESFXType, TObjectPtr<USoundBase>> SoundData;
-
-	UPROPERTY()
-	TMap<ESFXType, UAudioComponent*> ActiveSounds;
 };

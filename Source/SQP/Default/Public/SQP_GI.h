@@ -26,7 +26,7 @@ struct FUserInfo
 	UPROPERTY()
 	FString UserIDString;
 
-	FUserInfo() : UserNickname(TEXT("ANONYMOUS"))
+	FUserInfo() : UserNickname(TEXT(""))
 	{
 		UserID = FGuid::NewGuid();
 		UserIDString = UserID.ToString();
@@ -67,6 +67,9 @@ public:
 
 	UFUNCTION()
 	FORCEINLINE void AssignNewUser(const FString& NewNickname) { UserInfo = FUserInfo(NewNickname); }
+
+	UFUNCTION()
+	FORCEINLINE bool CheckNameEmpty() const { return UserInfo.UserNickname.IsEmpty(); }
 
 #pragma endregion
 
@@ -184,6 +187,14 @@ private:
 	UPROPERTY()
 	FSQP_PainRoomSaveFormat TargetPaintRoomSave;
 
-#pragma endregion 
-	
+#pragma endregion
+
+public:
+	//호스트는 관찰자로서 참여하는가?
+	UPROPERTY()
+	bool bHostAsSpectator;
+
+	//플레이 그라운드 모드인가?
+	UPROPERTY()
+	bool bPlayground;
 };

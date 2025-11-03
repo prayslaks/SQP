@@ -7,10 +7,12 @@
 #include "MainUI.h"
 #include "SQP_PC_PaintRoom.h"
 #include "SQP_PS_Master.h"
+#include "SQP_PS_PaintRoomComponent.h"
 #include "UIManager.h"
-#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Components/AudioComponent.h"
 #include "Components/BackgroundBlur.h"
 #include "Components/Button.h"
+#include "Components/RichTextBlock.h"
 #include "Components/ScaleBox.h"
 #include "Components/Slider.h"
 #include "Components/WidgetComponent.h"
@@ -55,6 +57,16 @@ UMainUIComponent::UMainUIComponent()
 	{
 		IMC = IMCAsset.Object;
 	}
+
+	AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+	AudioComp->bAutoActivate = false;
+	
+	if (static ConstructorHelpers::FObjectFinder<USoundWave> USoundWave(
+			TEXT("'/Game/Assets/Sounds/ThumpsUp.ThumpsUp'"));
+		USoundWave.Succeeded())
+	{
+		AudioComp->SetSound(USoundWave.Object);
+	}
 }
 
 
@@ -66,6 +78,11 @@ void UMainUIComponent::OnClick()
 		{
 			ASQP_PC_PaintRoom* LocalPC = Cast<ASQP_PC_PaintRoom>(GetWorld()->GetFirstPlayerController());
 			LocalPC->Server_CountLike(TargetPS);
+			if (LocalPC->IsLocalController())
+			{
+				
+				AudioComp->Play();
+			}
 		}
 	}
 }

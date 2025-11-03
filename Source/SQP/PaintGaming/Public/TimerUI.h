@@ -17,4 +17,6 @@ class SQP_API UTimerUI : public UUserWidget
 public:
 	UPROPERTY(meta=(BindWidget))
 	TObjectPtr<class URichTextBlock> TimerRichTextBlock;
+	UPROPERTY(meta=(BindWidget))
+	TObjectPtr<class UImage> ReferImage;
 };

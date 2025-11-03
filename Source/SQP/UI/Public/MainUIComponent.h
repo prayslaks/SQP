@@ -58,4 +58,7 @@ protected:
 
 	void SetBlurStrength(float Value);
 	float ElapsedBlurStrength = 0.f;
+
+	UPROPERTY()
+	TObjectPtr<UAudioComponent> AudioComp;
 };

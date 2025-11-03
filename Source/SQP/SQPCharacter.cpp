@@ -10,8 +10,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Components/AudioComponent.h"
 #include "Net/UnrealNetwork.h"
-#include "UI/VREditorUISystem.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -51,6 +51,17 @@ ASQPCharacter::ASQPCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+	AudioComp->SetupAttachment(RootComponent);
+	AudioComp->bAutoActivate = false;
+	
+	if (static ConstructorHelpers::FObjectFinder<USoundWave> USoundWave(
+			TEXT("'/Game/Assets/Sounds/Wheel.Wheel'"));
+		USoundWave.Succeeded())
+	{
+		AudioComp->SetSound(USoundWave.Object);
+	}
 }
 
 void ASQPCharacter::BeginPlay()
@@ -77,9 +88,18 @@ void ASQPCharacter::Tick(float DeltaSeconds)
 		if (InputVec.IsNearlyZero())
 		{
 			Server_ChangeWheelSpeed(0.f);
+		if (AudioComp->IsPlaying())
+		{
+			AudioComp->Stop();
+		}
 			return;
 		}
 		Server_ChangeWheelSpeed(-0.09f);
+		if (!AudioComp->IsPlaying())
+		{
+			AudioComp->Play();
+		}
+		
 	}
 }
 

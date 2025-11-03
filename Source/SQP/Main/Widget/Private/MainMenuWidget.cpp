@@ -38,6 +38,9 @@ void UMainMenuWidget::NativeConstruct()
 	BackButtonOne->OnClicked.AddDynamic(this, &UMainMenuWidget::OnBackButtonClicked);
 	BackButtonTwo->OnClicked.AddDynamic(this, &UMainMenuWidget::OnBackButtonClicked);
 
+	//나가기 버튼 바인딩
+	ExitMenuButton->OnClicked.AddDynamic(this, &UMainMenuWidget::OnExitButtonClicked);
+
 	//시션 검색 완료 콜백 바인딩
 	if (const auto GI = Cast<USQP_GI>(GetGameInstance()))
 	{
@@ -60,8 +63,19 @@ void UMainMenuWidget::NativeConstruct()
 	//텍스트 바인딩
 	EnterNicknameTextBox->OnTextCommitted.AddDynamic(this, &UMainMenuWidget::OnEnterNicknameTextCommitted);
 
-	//환영 판넬로 스위칭
-	WidgetSwitcher->SetActiveWidgetIndex(3);
+	if (const auto GI = Cast<USQP_GI>(GetGameInstance()))
+	{
+		if (GI->CheckNameEmpty())
+		{
+			//환영 판넬로 스위칭
+			WidgetSwitcher->SetActiveWidgetIndex(3);		
+		}
+		else
+		{
+			//메뉴 판넬로 스위칭
+			WidgetSwitcher->SetActiveWidgetIndex(0);
+		}
+	}
 }
 
 void UMainMenuWidget::NativeOnInitialized()
@@ -178,4 +192,9 @@ void UMainMenuWidget::OnFindCompleted(const TArray<FOnlineSessionSearchResult>& 
 
 	//버튼 다시 활성화
 	FindButton->SetIsEnabled(!bIsFindingSession);
+}
+
+void UMainMenuWidget::OnExitButtonClicked()
+{
+	UKismetSystemLibrary::QuitGame(GetWorld(), GetWorld()->GetFirstPlayerController(), EQuitPreference::Quit, false);
 }
