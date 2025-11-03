@@ -33,7 +33,10 @@ protected:
 	TObjectPtr<UMaterialInstanceDynamic> DynMat;
 	UTexture2D* LoadTextureByIndex(int32 Index);
 	
-public:	
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ResetRemainingTime();
+	
 	virtual void OnPossess(APawn* InPawn) override;
 
 	UFUNCTION(Server, Reliable)

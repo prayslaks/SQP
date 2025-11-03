@@ -149,6 +149,11 @@ void ASQP_PC_PaintRoom::Server_CountLike_Implementation(ASQP_PS_Master* TargetPS
 	TargetPS->PaintRoom->IncreaseLikeCounter();
 }
 
+void ASQP_PC_PaintRoom::Multicast_ResetRemainingTime_Implementation()
+{
+	RemainingTime = 1;
+}
+
 void ASQP_PC_PaintRoom::ReplicatedCountDown()
 {
 	if (GS->bOnCountdown)
