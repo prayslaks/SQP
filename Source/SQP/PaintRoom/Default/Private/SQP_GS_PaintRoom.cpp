@@ -140,6 +140,14 @@ void ASQP_GS_PaintRoom::OnRep_PaintRoomState()
 	}
 }
 
+// void ASQP_GS_PaintRoom::OnRep_bOnCountdown()
+// {
+// 	if (bOnCountdown == false)
+// 	{
+// 		Cast<ASQP_PC_PaintRoom>(GetWorld()->GetFirstPlayerController())->Remaining = 1;
+// 	}
+// }
+
 void ASQP_GS_PaintRoom::Multicast_SetRandomImage_Implementation(UTexture2D* Image)
 {
 	RandomImage = Image;

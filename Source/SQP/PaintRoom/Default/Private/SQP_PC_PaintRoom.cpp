@@ -20,6 +20,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "PlaygroundMenuWidget.h"
 #include "Components/AudioComponent.h"
+#include "Net/UnrealNetwork.h"
 
 ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 {
@@ -149,6 +150,13 @@ void ASQP_PC_PaintRoom::BeginPlay()
 	}
 }
 
+void ASQP_PC_PaintRoom::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	//DOREPLIFETIME(ASQP_PC_PaintRoom, Remaining)
+}
+
 void ASQP_PC_PaintRoom::OnOST1Finished()
 {
 	if (IsLocalController())
@@ -264,7 +272,7 @@ void ASQP_PC_PaintRoom::Server_CountLike_Implementation(ASQP_PS_Master* TargetPS
 
 void ASQP_PC_PaintRoom::Multicast_ResetRemainingTime_Implementation()
 {
-	RemainingTime = 1;
+	Remaining = 1;
 }
 
 void ASQP_PC_PaintRoom::ReplicatedCountDown()

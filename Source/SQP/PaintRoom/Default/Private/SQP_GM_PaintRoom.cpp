@@ -323,11 +323,12 @@ void ASQP_GM_PaintRoom::EndCatchMindMiniGame()
 		}
 
 		//모든 유저 시간 초기화
+		//GSPaint->bOnCountdown = false;
 		for (const auto PS : GSPaint->PlayerArray)
 		{
 			if (const auto PCPaint = Cast<ASQP_PC_PaintRoom>(PS->GetPlayerController()))
 			{
-				PCPaint->Multicast_ResetRemainingTime();
+				PCPaint->Remaining = 3.f;
 			}
 		}
 
