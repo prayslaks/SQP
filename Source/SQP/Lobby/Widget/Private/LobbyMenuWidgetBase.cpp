@@ -23,7 +23,7 @@ void ULobbyMenuWidgetBase::NativeConstruct()
 	GetWorld()->GetTimerManager().SetTimer(UpdateNumOfPlayerTimerHandle, FTimerDelegate::CreateLambda([this]()
 	{
 		NumOfPlayers->SetText(FText::FromString(FString::Printf(TEXT("%d"), GetWorld()->GetGameState()->PlayerArray.Num())));
-	}), 0.1, true);
+	}), 2, true);
 }
 
 void ULobbyMenuWidgetBase::NativeDestruct()

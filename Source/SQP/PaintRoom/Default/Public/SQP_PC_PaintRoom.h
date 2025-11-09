@@ -22,6 +22,7 @@ protected:
 	ASQP_PC_PaintRoom();
 	
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -40,7 +41,10 @@ protected:
 	TObjectPtr<UMaterialInstanceDynamic> DynMat;
 	UTexture2D* LoadTextureByIndex(int32 Index);
 	
-public:	
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ResetRemainingTime();
+	
 	virtual void OnPossess(APawn* InPawn) override;
 
 	UFUNCTION(Server, Reliable)
@@ -102,6 +106,7 @@ public:
 	UPROPERTY()
 	TObjectPtr<class UTimerUI> TimerUI;
 	float Elapsed;
+	//UPROPERTY(Replicated)
 	float Remaining;
 	int32 RemainingTime;
 	int32 LastRemainingTime = -1;
