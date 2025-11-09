@@ -36,7 +36,10 @@ struct FPlayerInfo
     
 	//생성자
 	FPlayerInfo() : PlayerUniqueId(""), PlayerName(""), LobbyState(ELobbyState::None) {}
-	FPlayerInfo(const FString& InPlayerUniqueId, const FString& InPlayerName, const ELobbyState& InLobbyState) : PlayerUniqueId(InPlayerUniqueId), PlayerName(InPlayerName), LobbyState(InLobbyState) {}
+	FPlayerInfo(const FString& InPlayerUniqueId, const FString& InPlayerName, const ELobbyState& InLobbyState) :
+		PlayerUniqueId(InPlayerUniqueId),
+		PlayerName(InPlayerName),
+		LobbyState(InLobbyState) {}
 
 	//직렬화
 	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess)
