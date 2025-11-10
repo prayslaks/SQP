@@ -2,6 +2,7 @@
 
 #include "Main/Default/Public/SQP_GM_Main.h"
 
+#include "SQP_GI.h"
 #include "Blueprint/UserWidget.h"
 
 ASQP_GM_Main::ASQP_GM_Main()
@@ -17,6 +18,11 @@ ASQP_GM_Main::ASQP_GM_Main()
 void ASQP_GM_Main::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (const auto GI = Cast<USQP_GI>(GetGameInstance()))
+	{
+		GI->TerminateMySession();
+	}
 
 	//메인 메뉴의 위젯 블루프린트 생성
 	const auto CreatedWidget = CreateWidget(GetWorld(), MainMenuWidgetClass);
