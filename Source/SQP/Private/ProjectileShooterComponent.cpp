@@ -1,115 +1,59 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ProjectileShooterComponent.h"
-
 #include "ProjectileBase.h"
 #include "ProjectilePoolWorldSubsystem.h"
+#include "SQP.h"
 #include "SQPPaintBallProjectile.h"
 #include "SQP_PS_Master.h"
 #include "SQP_PS_PaintRoomComponent.h"
 #include "Components/AudioComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/PlayerState.h"
 
 UProjectileShooterComponent::UProjectileShooterComponent() :
-	bIsOnTrigger(false),
-	ElapsedTimeAfterLastShoot(0),
 	ShootRate(1),
-	ShootCounter(0),
-	BurstLimiter(-1)
+	ProjectileSpeed(5000),
+	TimeAtLastShootAtServer(0)
 {
-	//컴포넌트 틱 활성화
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
+	//오디오 컴포넌트 부착
 	AudioComp = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
 	AudioComp->SetupAttachment(this);
 	AudioComp->bAutoActivate = false;
 
-	if (static ConstructorHelpers::FObjectFinder<USoundWave> USoundWave(
-			TEXT("'/Game/Assets/Sounds/Boink.Boink'"));
-		USoundWave.Succeeded())
+	//사운드 에셋
+	if (static ConstructorHelpers::FObjectFinder<USoundWave>
+		Finder(TEXT("'/Game/Assets/Sounds/Boink.Boink'"));
+		Finder.Succeeded())
 	{
-		AudioComp->SetSound(USoundWave.Object);
+		AudioComp->SetSound(Finder.Object);
 	}
 }
 
 void UProjectileShooterComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//로컬 플레이어 확인을 위해 소유 캐릭터 획득
 	OwnerCharacter = Cast<APawn>(GetOwner());
 }
 
-void UProjectileShooterComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-                                                FActorComponentTickFunction* ThisTickFunction)
+void UProjectileShooterComponent::PoolingProjectile(const TSubclassOf<AProjectileBase> ProjectileClass, const FTransform& SpawnTransform) const
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	//서버 측의 오소리티 캐릭터일 때만
-	if (OwnerCharacter == nullptr)
-	{
-		return;
-	}
-
-	if (OwnerCharacter->HasAuthority() == false)
-		return;
-
-	//사격이 가능한 상태일 때만
-	APlayerState* PS = OwnerCharacter->GetPlayerState();
-	if (PS == nullptr)
-		return;
-
-	ASQP_PS_Master* MasterPS = Cast<ASQP_PS_Master>(PS);
-	if (MasterPS == nullptr || MasterPS->PaintRoom == nullptr)
-		return;
-
-	if (MasterPS->PaintRoom->CAN_FIRE_PAINT_BALL == false)
-		return;
-
-	//트리거가 활성화되어 있을 때만
-	if (bIsOnTrigger == false)
-	{
-		return;
-	}
-
-	//버스트 리미터보다 적게 발사했다면
-	if (BurstLimiter == -1 || ShootCounter < BurstLimiter)
-	{
-		//시간이 지나가고
-		ElapsedTimeAfterLastShoot += DeltaTime;
-
-		//발사 시간이 지나가면
-		if (ElapsedTimeAfterLastShoot > ShootRate)
-		{
-			//발사 카운터를 증가시키고
-			ShootCounter++;
-
-			//발사 시간을 차감하고
-			ElapsedTimeAfterLastShoot -= ShootRate;
-
-			//페인트 볼을 발사한다
-			FirePaintBall();
-
-			if (OwnerCharacter->GetController()->IsLocalController())
-			{
-				AudioComp->Play();
-			}
-		}
-	}
-}
-
-void UProjectileShooterComponent::FirePaintBall()
-{
-	//발사체를 발사한다
 	if (const auto Subsystem = GetWorld()->GetSubsystem<UProjectilePoolWorldSubsystem>())
 	{
-		//발사체 풀링
-		const auto Projectile = Subsystem->PopProjectile(ProjectileClass, GetComponentTransform(), 2000);
+		//월드서브시스템에서 발사체 풀링
+		AProjectileBase* Projectile = Subsystem->PopProjectile(ProjectileClass, SpawnTransform, 2000);
+		if (!Projectile)
+		{
+			return;
+		}
 
-		//소유자 설정
+		//오너 설정
 		Projectile->SetOwner(GetOwner());
 
-		//페인트 볼에 색상 설정
+		//페인트볼에 색상 설정
 		if (const auto PaintBall = Cast<ASQPPaintBallProjectile>(Projectile))
 		{
 			if (const auto Player = Cast<ACharacter>(GetOwner()))
@@ -122,37 +66,100 @@ void UProjectileShooterComponent::FirePaintBall()
 				}
 			}
 		}
-
-		// 풀링되지 않은 일반 스폰
-		// const auto Temp = GetWorld()->SpawnActor<AProjectileBase>(ProjectileClass, GetComponentTransform());
-		// Temp->ActiveProjectile(GetComponentTransform(), 2000);
 	}
 }
 
 void UProjectileShooterComponent::PullTrigger()
 {
-	if (OwnerCharacter && OwnerCharacter->IsLocallyControlled())
+	//로컬 컨트롤러 확인
+	if (!OwnerCharacter || !OwnerCharacter->IsLocallyControlled())
 	{
-		Server_StartShoot();
+		return;
 	}
+
+	//현재 시간과 이전 사격 시간을 비교하여 사격 주기와 대조
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+	if (TimeAtLastShootAtClient + ShootRate > CurrentTime)
+	{
+		return;
+	}
+
+	//사격 시간 업데이트
+	TimeAtLastShootAtClient = CurrentTime;
+
+	//사격음 재생
+	if (AudioComp)
+	{
+		AudioComp->Play();
+	}
+	
+	//사격 순간의 트랜스폼 저장
+	const FTransform MuzzleTransform = GetComponentTransform();
+
+	//클라이언트 측 가짜 발사체 스폰
+	PoolingProjectile(FakeProjectileClass, MuzzleTransform);
+	
+	//서버 측의 진짜 발사체를 위해서 사격 정보 전달
+	const FVector MuzzleLocation = MuzzleTransform.GetLocation();
+	const FVector ShootDirection = MuzzleTransform.GetRotation().GetForwardVector();
+	const float ShooterServerTime = GetWorld()->GetGameState()->GetServerWorldTimeSeconds();
+	Server_Fire(MuzzleLocation, ShootDirection, ShooterServerTime);
 }
 
 void UProjectileShooterComponent::ReleaseTrigger()
 {
-	if (OwnerCharacter && OwnerCharacter->IsLocallyControlled())
+	
+}
+
+void UProjectileShooterComponent::Server_Fire_Implementation(const FVector MuzzleLocation, const FVector_NetQuantizeNormal ShootDirection, const float ShooterServerTime)
+{
+	//오너 캐릭터의 유효성 확인
+	if (OwnerCharacter == nullptr)
 	{
-		Server_StopShoot();
+		return;
 	}
+	
+	//이전 사격 시간과 비교하여 너무 빠르면 차단
+	const float CurrentTime = GetWorld()->GetGameState()->GetServerWorldTimeSeconds();
+	if (TimeAtLastShootAtServer + ShootRate > CurrentTime)
+	{
+		return;
+	}
+
+	//사격 시간 업데이트
+	TimeAtLastShootAtServer = CurrentTime;
+
+	//지연 시간을 토대로 트랜스폼을 재구축
+	const float Latency = GetWorld()->GetGameState()->GetServerWorldTimeSeconds() - ShooterServerTime;
+	const FTransform MuzzleTransform(ShootDirection.ToOrientationRotator(), MuzzleLocation + ProjectileSpeed * Latency * ShootDirection);
+
+	//서버 측의 비시각적 충돌 처리 진짜 발사체를 풀링
+	PoolingProjectile(RealProjectileClass, MuzzleTransform);
+
+	//모든 클라이언트에 시각적 가짜 발사체를 풀링하도록 명령
+	Multicast_FireVisuals(MuzzleLocation, ShootDirection, ShooterServerTime);
 }
 
-void UProjectileShooterComponent::Server_StartShoot_Implementation()
+void UProjectileShooterComponent::Multicast_FireVisuals_Implementation(const FVector MuzzleLocation, const FVector_NetQuantizeNormal ShootDirection, const float ShooterServerTime)
 {
-	bIsOnTrigger = true;
-	ElapsedTimeAfterLastShoot = ShootRate;
-	ShootCounter = 0;
-}
+	PRINTLOGNET(TEXT("Multicast Fake PaintBall!"));
+	
+	//발사 주체인 클라이언트를 제외한 나머지 클라이언트들만 가짜 발사체를 풀링하고 사운드를 재생
+	if (OwnerCharacter && !OwnerCharacter->IsLocallyControlled())
+	{
+		PRINTLOGNET(TEXT("Multicast Fake PaintBall!"));
+		
+		//지연 시간을 토대로 트랜스폼을 재구축
+		const float Latency = GetWorld()->GetGameState()->GetServerWorldTimeSeconds() - ShooterServerTime;
+		const FTransform MuzzleTransform(ShootDirection.ToOrientationRotator(), MuzzleLocation + ProjectileSpeed * Latency * ShootDirection);
+		
+		//시각적 가짜 발사체를 풀링하도록 명령
+		PoolingProjectile(FakeProjectileClass, MuzzleTransform);
 
-void UProjectileShooterComponent::Server_StopShoot_Implementation()
-{
-	bIsOnTrigger = false;
+		//사격음 재생
+		if (AudioComp)
+		{
+			AudioComp->Play();
+		}
+	}
 }

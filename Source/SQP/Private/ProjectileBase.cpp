@@ -24,37 +24,6 @@ AProjectileBase::AProjectileBase()
 	ProjectileMoveComp->bRotationFollowsVelocity = true;
 	ProjectileMoveComp->bInterpMovement = true;
 	ProjectileMoveComp->InterpLocationTime = 0.1;
-
-	//네트워크 설정
-	bReplicates = true;
-	SetNetUpdateFrequency(40);
-	AActor::SetReplicateMovement(true);
-}
-
-void AProjectileBase::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (HasAuthority() == false)
-	{
-		ProjectileMoveComp->Deactivate();
-	}
-}
-
-void AProjectileBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	//활성화 여부 리플리케이션
-	DOREPLIFETIME_CONDITION(AProjectileBase, bIsActive, COND_None);
-}
-
-void AProjectileBase::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
-{
-	Super::PreReplication(ChangedPropertyTracker);
-
-	//활성화 여부에 따라서 리플리케이션 여부 결정
-	DOREPLIFETIME_ACTIVE_OVERRIDE(AProjectileBase, bIsActive, bIsActive);
 }
 
 void AProjectileBase::ActiveProjectile(const FTransform& FireTransform, const float InitSpeed)
@@ -68,8 +37,6 @@ void AProjectileBase::ActiveProjectile(const FTransform& FireTransform, const fl
 		ProjectileMoveComp->Velocity = InitSpeed * GetActorForwardVector();
 		ProjectileMoveComp->Activate();
 		
-		//활성화
-		bIsActive = true;
 		SetActorHiddenInGame(false);
 		SetActorEnableCollision(true);
 
@@ -110,9 +77,7 @@ void AProjectileBase::InactivateProjectile()
 			ProjectileMoveComp->StopMovementImmediately();
 			ProjectileMoveComp->Velocity = FVector::ZeroVector;
 			ProjectileMoveComp->Deactivate();
-
-			//비활성화
-			bIsActive = false;
+			
 			SetActorHiddenInGame(true);
 			SetActorEnableCollision(false);
 

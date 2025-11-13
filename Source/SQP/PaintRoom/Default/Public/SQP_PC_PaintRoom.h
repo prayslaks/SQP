@@ -59,6 +59,10 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_CountLike(ASQP_PS_Master* TargetPS);
 
+	//클라이언트에 페인트 명령을 내리는 Multicast RPC
+	UFUNCTION(Client, Reliable)
+	void Client_PaintColor(const FVector_NetQuantize& Location, const FVector_NetQuantize& Direction, const FLinearColor BrushColor, const float BrushSizeValue);
+
 	//서버가 캐치마인드 제시어를 보내주는 Client RPC
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveCatchMindSuggestion(const FString& Suggestion, const FString& Hint);

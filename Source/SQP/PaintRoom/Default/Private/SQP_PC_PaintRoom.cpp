@@ -19,8 +19,11 @@
 #include "Components/RichTextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlaygroundMenuWidget.h"
+#include "SQPPaintWorldSubsystem.h"
 #include "Components/AudioComponent.h"
 #include "Net/UnrealNetwork.h"
+
+class USQPPaintWorldSubsystem;
 
 ASQP_PC_PaintRoom::ASQP_PC_PaintRoom()
 {
@@ -187,6 +190,8 @@ void ASQP_PC_PaintRoom::Tick(float DeltaSeconds)
 }
 
 
+
+
 void ASQP_PC_PaintRoom::Server_PaintColorChange_Implementation(const FLinearColor Value)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 1, FColor::Green, TEXT("PaintColorChange!"));
@@ -214,6 +219,24 @@ void ASQP_PC_PaintRoom::OnPossess(APawn* InPawn)
 	}
 }
 
+void ASQP_PC_PaintRoom::Client_PaintColor_Implementation(const FVector_NetQuantize& Location, const FVector_NetQuantize& Direction, const FLinearColor BrushColor, const float BrushSizeValue)
+{
+	const FVector Offset = Direction * 200;
+	const FVector Start = Location - Offset;
+	const FVector End = Location + Offset;
+	const TArray<AActor*> ActorsToIgnore{this};
+	const uint8 BrushIndex = FMath::RandRange(0, 8);
+
+	if (const auto Subsystem = GetWorld()->GetSubsystem<USQPPaintWorldSubsystem>())
+	{
+		if (!BrushSizeValue)
+		{
+			constexpr float TempBrushSize = 250;
+			Subsystem->TryPaintColor(Start, End, ActorsToIgnore, BrushIndex, TempBrushSize, BrushColor);
+		}
+		Subsystem->TryPaintColor(Start, End, ActorsToIgnore, BrushIndex, BrushSizeValue, BrushColor);
+	}
+}
 
 void ASQP_PC_PaintRoom::Client_NotifyAnswerIsWrong_Implementation()
 {

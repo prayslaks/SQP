@@ -1,7 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "SQPPaintBallProjectile.h"
+
+#include "SQP.h"
 #include "SQPPaintWorldSubsystem.h"
+#include "SQP_PC_PaintRoom.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -35,14 +38,29 @@ void ASQPPaintBallProjectile::OnOverlapBeginCallback(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
-	if (HasAuthority())
+	if (auto OtherPaintBall = Cast<ASQPPaintBallProjectile>(OtherActor))
+	{
+		PRINTLOGNET(TEXT("%s"), *OtherActor->GetActorNameOrLabel());
+		return;
+	}
+	
+	//서버 측은 진짜일 것이므로
+	if (HasAuthority() && bIsReal)
 	{
 		//모든 클라이언트에 채색 시도 명령
-		Multicast_TryPaint(PaintColor, BrushSize);
-
-		//비활성화
-		InactivateProjectile();
+		for (auto It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			if (const auto PC = Cast<ASQP_PC_PaintRoom>(It->Get()))
+			{
+				PC->Client_PaintColor(GetActorLocation(), GetActorForwardVector(), PaintColor, BrushSize);
+			}
+		}
+		
+		//Multicast_TryPaint(PaintColor, BrushSize);
 	}
+
+	//비활성화
+	InactivateProjectile();
 }
 
 void ASQPPaintBallProjectile::SetPaintColor(const FLinearColor& Value)
@@ -61,6 +79,8 @@ void ASQPPaintBallProjectile::Multicast_ColorPaintBall_Implementation(const FLin
 
 void ASQPPaintBallProjectile::Multicast_TryPaint_Implementation(const FLinearColor BrushColor, const float BrushSizeValue)
 {
+	PRINTLOGNET(TEXT("Success!"));
+	
 	const FVector Offset = GetActorForwardVector() * 200;
 	const FVector Start = GetActorLocation() - Offset;
 	const FVector End = GetActorLocation() + Offset;
