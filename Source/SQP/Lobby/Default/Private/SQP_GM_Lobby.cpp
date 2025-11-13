@@ -148,7 +148,7 @@ void ASQP_GM_Lobby::MoveToGameMap()
 			}
 			else
 			{
-				TagetLevel = GI->GetTargetPaintRoomSave().Level.Equals("") ? TEXT("ArtGallery") : GI->GetTargetPaintRoomSave().Level;
+				TagetLevel = GI->GetTargetPaintRoomSave().Level.Equals("") ? TEXT("SaveLoadTest") : GI->GetTargetPaintRoomSave().Level;
 			}
 
 			TagetLevel += TEXT("?seamless");
